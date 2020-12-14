@@ -8,4 +8,4 @@ noise
 torch
 matplotlib
 ## Getting Started
-For an example of running the simulation, run simController.py
+Install all dependencies and run simConroller.py for an example
