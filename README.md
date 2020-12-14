@@ -1,12 +1,14 @@
 # wheeledRobotSimPybullet
-## Dependencies
-pybullet
-numpy
-scipy
-noise
-## Optional Dependencies
-torch
-matplotlib
-## Getting Started
-Install all dependencies and run simConroller.py for an example
+## Overview
+## Installation
+### Required Dependencies
+- [pybullet]
+- [numpy]
+- [scipy]
+- [noise]
+### Optional Dependencies
+- [torch]
+- [matplotlib]
+## Basic Usage
+run simConroller.py for an example
 ### simController
