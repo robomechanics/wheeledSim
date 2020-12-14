@@ -3,12 +3,12 @@
 Maintainer: Sean J. Wang, sjw2@andrew.cmu.edu
 ## Installation
 ### Required Dependencies
-- [pybullet](pybullet.org)
-- [numpy]
-- [scipy]
-- [noise]
+- [PyBullet](pybullet.org)(Physics simulation engine)
+- [NumPy](numpy.org)
+- [SciPy](scipy.org)
+- [noise](pypi.org/project/noise)
 ### Optional Dependencies
-- [torch]
+- [PyTorch](pytorch.org)
 - [matplotlib]
 ## Basic Usage
 run simConroller.py for an example
