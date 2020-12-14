@@ -3,7 +3,7 @@
 Maintainer: Sean J. Wang, sjw2@andrew.cmu.edu
 ## Installation
 ### Required Dependencies
-- [PyBullet](pybullet.org)(Physics simulation engine)
+- [PyBullet](pybullet.org) Physics simulation engine
 - [NumPy](numpy.org)
 - [SciPy](scipy.org)
 - [noise](pypi.org/project/noise)
