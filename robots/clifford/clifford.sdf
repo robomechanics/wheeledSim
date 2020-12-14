@@ -1,0 +1,976 @@
+<?xml version="1.0" ?>
+<sdf version='1.6'>
+  <world name='sim_world'>
+    <model name='clifford'>
+      <link name='body'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <inertial>
+          <pose frame=''>0 -0 0 0 -0 0</pose>
+          <mass>1.20456</mass>
+          <inertia>
+            <ixx>0.00136339</ixx>
+            <ixy>-1.92982e-16</ixy>
+            <ixz>-5.63833e-15</ixz>
+            <iyy>0.0039261</iyy>
+            <iyz>3.35564e-17</iyz>
+            <izz>0.00436726</izz>
+          </inertia>
+        </inertial>
+        <visual name='body_visual'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>model://meshes/body.STL</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <collision name='body_visual'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>model://meshes/body.STL</uri>
+            </mesh>
+          </geometry>
+        </collision>
+      </link>
+      <link name='bro'>
+        <pose frame=''>-0.101 -0.0615 -0.024 1.28235 0.269455 -3.09986</pose>
+        <inertial>
+          <pose frame=''>0.115 -0 -0 0 -0 0</pose>
+          <mass>0.0117925</mass>
+          <inertia>
+            <ixx>9.65368e-08</ixx>
+            <ixy>4.10647e-12</ixy>
+            <ixz>1.05145e-19</ixz>
+            <iyy>5.42742e-05</iyy>
+            <iyz>2.71051e-20</iyz>
+            <izz>5.42722e-05</izz>
+          </inertia>
+        </inertial>
+        <visual name='bro_visual'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>model://meshes/linkageOut.STL</uri>
+            </mesh>
+          </geometry>
+        </visual>
+      </link>
+      <link name='backAxle'>
+        <pose frame=''>-0.322508 -0.07075 -0.085227 0.267288 -0 1.5708</pose>
+        <inertial>
+          <pose frame=''>0.07075 0.019868 0.013586 0 -0 0</pose>
+          <mass>0.0969889</mass>
+          <inertia>
+            <ixx>3.59997e-05</ixx>
+            <ixy>3.0828e-11</ixy>
+            <ixz>-2.58754e-11</ixz>
+            <iyy>0.00045052</iyy>
+            <iyz>9.38007e-07</iyz>
+            <izz>0.00042565</izz>
+          </inertia>
+        </inertial>
+        <visual name='backAxle_visual'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>model://meshes/axleRear.STL</uri>
+            </mesh>
+          </geometry>
+        </visual>
+      </link>
+      <link name='bli'>
+        <pose frame=''>-0.315871 0.016 -0.013949 -0.604825 -0.143825 0.148221</pose>
+        <inertial>
+          <pose frame=''>0.0975 0 -0 0 -0 0</pose>
+          <mass>0.0200332</mass>
+          <inertia>
+            <ixx>8.24621e-08</ixx>
+            <ixy>2.3168e-12</ixy>
+            <ixz>1.29699e-19</ixz>
+            <iyy>3.34708e-05</iyy>
+            <iyz>-3.30343e-20</iyz>
+            <izz>3.34688e-05</izz>
+          </inertia>
+        </inertial>
+        <visual name='bli_visual'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>model://meshes/linkageIn.STL</uri>
+            </mesh>
+          </geometry>
+        </visual>
+      </link>
+      <link name='blo'>
+        <pose frame=''>-0.322508 0.07075 -0.085227 2.55732 -0.269455 -0.041735</pose>
+        <inertial>
+          <pose frame=''>0.115 0 0 0 -0 0</pose>
+          <mass>0.0117925</mass>
+          <inertia>
+            <ixx>9.65368e-08</ixx>
+            <ixy>-4.10647e-12</ixy>
+            <ixz>2.98276e-19</ixz>
+            <iyy>5.42742e-05</iyy>
+            <iyz>-6.94567e-20</iyz>
+            <izz>5.42722e-05</izz>
+          </inertia>
+        </inertial>
+        <visual name='blo_visual'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>model://meshes/linkageOut.STL</uri>
+            </mesh>
+          </geometry>
+        </visual>
+      </link>
+      <link name='blslower'>
+        <pose frame=''>-0.318186 0.092 -0.068785 -0.568218 -0.618473 -0.161762</pose>
+        <inertial>
+          <pose frame=''>0.016589 -0 0 0 -0 0</pose>
+          <mass>0.0112311</mass>
+          <inertia>
+            <ixx>1.19839e-06</ixx>
+            <ixy>-7.365e-14</ixy>
+            <ixz>-1.39475e-14</ixz>
+            <iyy>9.62721e-07</iyy>
+            <iyz>1.3652e-15</iyz>
+            <izz>9.62722e-07</izz>
+          </inertia>
+        </inertial>
+        <visual name='blslower_visual'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>model://meshes/springPart.STL</uri>
+            </mesh>
+          </geometry>
+        </visual>
+      </link>
+      <link name='blsupper'>
+        <pose frame=''>-0.1895 0.071 0.024 2.41118 0.618473 2.97983</pose>
+        <inertial>
+          <pose frame=''>0.016589 -0 0 0 -0 0</pose>
+          <mass>0.0112311</mass>
+          <inertia>
+            <ixx>1.19839e-06</ixx>
+            <ixy>-4.34583e-14</ixy>
+            <ixz>-1.88149e-14</ixz>
+            <iyy>9.62721e-07</iyy>
+            <iyz>1.08668e-15</iyz>
+            <izz>9.62722e-07</izz>
+          </inertia>
+        </inertial>
+        <visual name='blsupper_visual'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>model://meshes/springPart.STL</uri>
+            </mesh>
+          </geometry>
+        </visual>
+      </link>
+      <link name='blwheel'>
+        <pose frame=''>-0.342683 0.115 -0.074 -2.8743 -0 1.5708</pose>
+        <inertial>
+          <pose frame=''>0.00750009171 0 0 0 -0 0</pose>
+          <mass>0.19539</mass>
+          <inertia>
+            <ixx>6.03364e-05</ixx>
+            <ixy>3.16416e-20</ixy>
+            <ixz>-2.02141e-21</ixz>
+            <iyy>0.000215224</iyy>
+            <iyz>6.77626e-21</iyz>
+            <izz>0.000212705</izz>
+          </inertia>
+        </inertial>
+        <visual name='blwheel_visual'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>model://meshes/wheelHub.STL</uri>
+            </mesh>
+          </geometry>
+        </visual>
+      </link>
+      <link name='bri'>
+        <pose frame=''>-0.315871 -0.016 -0.013949 1.44194 -0.143825 -0.148221</pose>
+        <inertial>
+          <pose frame=''>0.0975 0 0 0 -0 0</pose>
+          <mass>0.0200332</mass>
+          <inertia>
+            <ixx>8.24621e-08</ixx>
+            <ixy>-2.3168e-12</ixy>
+            <ixz>-2.12659e-19</ixz>
+            <iyy>3.34708e-05</iyy>
+            <iyz>5.97158e-20</iyz>
+            <izz>3.34688e-05</izz>
+          </inertia>
+        </inertial>
+        <visual name='bri_visual'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>model://meshes/linkageIn.STL</uri>
+            </mesh>
+          </geometry>
+        </visual>
+      </link>
+      <link name='brslower'>
+        <pose frame=''>-0.318186 -0.092 -0.068785 -0.210766 -0.618473 0.161762</pose>
+        <inertial>
+          <pose frame=''>0.016589 0 0 0 -0 0</pose>
+          <mass>0.0112311</mass>
+          <inertia>
+            <ixx>1.19839e-06</ixx>
+            <ixy>6.27133e-15</ixy>
+            <ixz>-2.09143e-14</ixz>
+            <iyy>9.62721e-07</iyy>
+            <iyz>-1.74313e-16</iyz>
+            <izz>9.62722e-07</izz>
+          </inertia>
+        </inertial>
+        <visual name='brslower_visual'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>model://meshes/springPart.STL</uri>
+            </mesh>
+          </geometry>
+        </visual>
+      </link>
+      <link name='brsupper'>
+        <pose frame=''>-0.1895 -0.071 0.024 2.05373 0.618473 -2.97983</pose>
+        <inertial>
+          <pose frame=''>0.016589 -0 0 0 -0 0</pose>
+          <mass>0.0112311</mass>
+          <inertia>
+            <ixx>1.19839e-06</ixx>
+            <ixy>-9.65399e-14</ixy>
+            <ixz>-4.33935e-15</ixz>
+            <iyy>9.62721e-07</iyy>
+            <iyz>5.56748e-16</iyz>
+            <izz>9.62722e-07</izz>
+          </inertia>
+        </inertial>
+        <visual name='brsupper_visual'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>model://meshes/springPart.STL</uri>
+            </mesh>
+          </geometry>
+        </visual>
+      </link>
+      <link name='brwheel'>
+        <pose frame=''>-0.342683 -0.115 -0.074 2.8743 0 -1.5708</pose>
+        <inertial>
+          <pose frame=''>0.00750009171 -0 0 0 -0 0</pose>
+          <mass>0.19539</mass>
+          <inertia>
+            <ixx>6.03364e-05</ixx>
+            <ixy>8.21409e-21</ixy>
+            <ixz>-4.18157e-21</ixz>
+            <iyy>0.000215224</iyy>
+            <iyz>1.35525e-20</iyz>
+            <izz>0.000212705</izz>
+          </inertia>
+        </inertial>
+        <visual name='brwheel_visual'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>model://meshes/wheelHub.STL</uri>
+            </mesh>
+          </geometry>
+        </visual>
+      </link>
+      <link name='bltire'>
+        <pose frame=''>-0.342683 0.135 -0.074 -2.31924 -0 1.5708</pose>
+        <inertial>
+          <pose frame=''>0.045 0 -0 0 -0 0</pose>
+          <mass>2.65072</mass>
+          <inertia>
+            <ixx>0.0140819</ixx>
+            <ixy>-2.23921e-19</ixy>
+            <ixz>-3.27444e-19</ixz>
+            <iyy>0.00883021</iyy>
+            <iyz>2.1684e-18</iyz>
+            <izz>0.00883021</izz>
+          </inertia>
+        </inertial>
+        <collision name='bltire_collision'>
+          <pose frame=''>0.045 0 0 0 1.57079632679 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.1 0 0</radius>
+              <length>0.09 0 0</length>
+            </cylinder>
+          </geometry>
+        </collision>
+        <visual name='bltire_visual'>
+          <pose frame=''>0.045 0 0 0 1.57079632679 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.1 0 0</radius>
+              <length>0.09 0 0</length>
+            </cylinder>
+          </geometry>
+        </visual>
+      </link>
+      <link name='brtire'>
+        <pose frame=''>-0.342683 -0.225 -0.074 -2.87457 -0 1.5708</pose>
+        <inertial>
+          <pose frame=''>0.045 0 0 0 -0 0</pose>
+          <mass>2.65072</mass>
+          <inertia>
+            <ixx>0.0140819</ixx>
+            <ixy>2.01201e-19</ixy>
+            <ixz>-7.89159e-20</ixz>
+            <iyy>0.00883021</iyy>
+            <iyz>-4.33681e-19</iyz>
+            <izz>0.00883021</izz>
+          </inertia>
+        </inertial>
+        <collision name='brtire_collision'>
+          <pose frame=''>0.045 0 0 0 1.57079632679 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.1 0 0</radius>
+              <length>0.09 0 0</length>
+            </cylinder>
+          </geometry>
+        </collision>
+        <visual name='brtire_visual'>
+          <pose frame=''>0.045 0 0 0 1.57079632679 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.1 0 0</radius>
+              <length>0.09 0 0</length>
+            </cylinder>
+          </geometry>
+        </visual>
+      </link>
+      <link name='fro'>
+        <pose frame=''>0.101 -0.0615 -0.024 2.1962 0.26945 -0.041735</pose>
+        <inertial>
+          <pose frame=''>0.115 -0 0 0 -0 0</pose>
+          <mass>0.0117925</mass>
+          <inertia>
+            <ixx>9.65368e-08</ixx>
+            <ixy>-4.10647e-12</ixy>
+            <ixz>-5.41898e-20</ixz>
+            <iyy>5.42742e-05</iyy>
+            <iyz>-2.03288e-20</iyz>
+            <izz>5.42722e-05</izz>
+          </inertia>
+        </inertial>
+        <visual name='fro_visual'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>model://meshes/linkageOut.STL</uri>
+            </mesh>
+          </geometry>
+        </visual>
+      </link>
+      <link name='frontAxle'>
+        <pose frame=''>0.322508 -0.07075 -0.085226 -0.267269 -2.4e-05 1.57078</pose>
+        <inertial>
+          <pose frame=''>0.07075 -0.019868 0.013586 0 -0 0</pose>
+          <mass>0.0969889</mass>
+          <inertia>
+            <ixx>3.59997e-05</ixx>
+            <ixy>3.0828e-11</ixy>
+            <ixz>2.58754e-11</ixz>
+            <iyy>0.00045052</iyy>
+            <iyz>-9.38007e-07</iyz>
+            <izz>0.00042565</izz>
+          </inertia>
+        </inertial>
+        <visual name='frontAxle_visual'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>model://meshes/axleFront.STL</uri>
+            </mesh>
+          </geometry>
+        </visual>
+      </link>
+      <link name='fli'>
+        <pose frame=''>0.315873 0.015998 -0.013946 0.904649 -0.143848 2.99336</pose>
+        <inertial>
+          <pose frame=''>0.0975 0 -0 0 -0 0</pose>
+          <mass>0.0200332</mass>
+          <inertia>
+            <ixx>8.24621e-08</ixx>
+            <ixy>2.3168e-12</ixy>
+            <ixz>-1.57474e-19</ixz>
+            <iyy>3.34708e-05</iyy>
+            <iyz>-1.18585e-20</iyz>
+            <izz>3.34688e-05</izz>
+          </inertia>
+        </inertial>
+        <visual name='fli_visual'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>model://meshes/linkageIn.STL</uri>
+            </mesh>
+          </geometry>
+        </visual>
+      </link>
+      <link name='flo'>
+        <pose frame=''>0.32251 0.07075 -0.085223 0.756048 -0.269473 -3.09986</pose>
+        <inertial>
+          <pose frame=''>0.115 -0 -0 0 -0 0</pose>
+          <mass>0.0117925</mass>
+          <inertia>
+            <ixx>9.65368e-08</ixx>
+            <ixy>4.10647e-12</ixy>
+            <ixz>-1.48398e-19</ixz>
+            <iyy>5.42742e-05</iyy>
+            <iyz>5.75982e-20</iyz>
+            <izz>5.42722e-05</izz>
+          </inertia>
+        </inertial>
+        <visual name='flo_visual'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>model://meshes/linkageOut.STL</uri>
+            </mesh>
+          </geometry>
+        </visual>
+      </link>
+      <link name='flslower'>
+        <pose frame=''>0.318189 0.092 -0.06878 -1.43248 -0.618488 -2.97982</pose>
+        <inertial>
+          <pose frame=''>0.016589 -0 0 0 -0 0</pose>
+          <mass>0.0112311</mass>
+          <inertia>
+            <ixx>1.19839e-06</ixx>
+            <ixy>-9.03931e-14</ixy>
+            <ixz>-8.40562e-15</ixz>
+            <iyy>9.62721e-07</iyy>
+            <iyz>1.00979e-15</iyz>
+            <izz>9.62722e-07</izz>
+          </inertia>
+        </inertial>
+        <visual name='flslower_visual'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>model://meshes/springPart.STL</uri>
+            </mesh>
+          </geometry>
+        </visual>
+      </link>
+      <link name='flsupper'>
+        <pose frame=''>0.189504 0.070999 0.024007 2.4484 0.618488 0.161768</pose>
+        <inertial>
+          <pose frame=''>0.016589 -0 0 0 -0 0</pose>
+          <mass>0.0112311</mass>
+          <inertia>
+            <ixx>1.19839e-06</ixx>
+            <ixy>-8.12639e-14</ixy>
+            <ixz>-1.18884e-14</ixz>
+            <iyy>9.62721e-07</iyy>
+            <iyz>1.28395e-15</iyz>
+            <izz>9.62722e-07</izz>
+          </inertia>
+        </inertial>
+        <visual name='flsupper_visual'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>model://meshes/springPart.STL</uri>
+            </mesh>
+          </geometry>
+        </visual>
+      </link>
+      <link name='flwheel'>
+        <pose frame=''>0.342686 0.114999 -0.073995 2.87432 -2.4e-05 1.57078</pose>
+        <inertial>
+          <pose frame=''>0.00750009171 0 0 0 -0 0</pose>
+          <mass>0.19539</mass>
+          <inertia>
+            <ixx>6.03364e-05</ixx>
+            <ixy>7.91021e-21</ixy>
+            <ixz>4.51343e-21</ixz>
+            <iyy>0.000215224</iyy>
+            <iyz>2.37169e-20</iyz>
+            <izz>0.000212705</izz>
+          </inertia>
+        </inertial>
+        <visual name='flwheel_visual'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>model://meshes/wheelHub.STL</uri>
+            </mesh>
+          </geometry>
+        </visual>
+      </link>
+      <link name='fri'>
+        <pose frame=''>0.315873 -0.016002 -0.013947 0.861564 -0.143841 -2.99338</pose>
+        <inertial>
+          <pose frame=''>0.0975 0 -0 0 -0 0</pose>
+          <mass>0.0200332</mass>
+          <inertia>
+            <ixx>8.24621e-08</ixx>
+            <ixy>2.3168e-12</ixy>
+            <ixz>6.46458e-20</ixz>
+            <iyy>3.34708e-05</iyy>
+            <iyz>-2.20229e-20</iyz>
+            <izz>3.34688e-05</izz>
+          </inertia>
+        </inertial>
+        <visual name='fri_visual'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>model://meshes/linkageIn.STL</uri>
+            </mesh>
+          </geometry>
+        </visual>
+      </link>
+      <link name='frslower'>
+        <pose frame=''>0.318186 -0.092 -0.068784 -0.708805 -0.618496 2.97983</pose>
+        <inertial>
+          <pose frame=''>0.016589 -0 0 0 -0 0</pose>
+          <mass>0.0112311</mass>
+          <inertia>
+            <ixx>1.19839e-06</ixx>
+            <ixy>-8.21246e-14</ixy>
+            <ixz>-1.16186e-14</ixz>
+            <iyy>9.62721e-07</iyy>
+            <iyz>1.2681e-15</iyz>
+            <izz>9.62722e-07</izz>
+          </inertia>
+        </inertial>
+        <visual name='frslower_visual'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>model://meshes/springPart.STL</uri>
+            </mesh>
+          </geometry>
+        </visual>
+      </link>
+      <link name='frsupper'>
+        <pose frame=''>0.189502 -0.071001 0.024004 1.72472 0.618496 -0.161761</pose>
+        <inertial>
+          <pose frame=''>0.016589 -0 0 0 -0 0</pose>
+          <mass>0.0112311</mass>
+          <inertia>
+            <ixx>1.19839e-06</ixx>
+            <ixy>-8.97667e-14</ixy>
+            <ixz>-8.70313e-15</ixz>
+            <iyy>9.62721e-07</iyy>
+            <iyz>1.03829e-15</iyz>
+            <izz>9.62722e-07</izz>
+          </inertia>
+        </inertial>
+        <visual name='frsupper_visual'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>model://meshes/springPart.STL</uri>
+            </mesh>
+          </geometry>
+        </visual>
+      </link>
+      <link name='frwheel'>
+        <pose frame=''>0.342683 -0.115001 -0.074 0.267269 2.4e-05 -1.57081</pose>
+        <inertial>
+          <pose frame=''>0.00750009171 0 -0 0 -0 0</pose>
+          <mass>0.19539</mass>
+          <inertia>
+            <ixx>6.03364e-05</ixx>
+            <ixy>-7.33769e-21</ixy>
+            <ixz>2.87017e-21</ixz>
+            <iyy>0.000215224</iyy>
+            <iyz>-3.38813e-21</iyz>
+            <izz>0.000212705</izz>
+          </inertia>
+        </inertial>
+        <visual name='frwheel_visual'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>model://meshes/wheelHub.STL</uri>
+            </mesh>
+          </geometry>
+        </visual>
+      </link>
+      <link name='fltire'>
+        <pose frame=''>0.342686 0.134999 -0.073994 -1.4358 -2.4e-05 1.57078</pose>
+        <inertial>
+          <pose frame=''>0.045 0 0 0 -0 0</pose>
+          <mass>2.65072</mass>
+          <inertia>
+            <ixx>0.0140819</ixx>
+            <ixy>-1.63996e-19</ixy>
+            <ixz>-5.51633e-19</ixz>
+            <iyy>0.00883021</iyy>
+            <iyz>-1.0842e-19</iyz>
+            <izz>0.00883021</izz>
+          </inertia>
+        </inertial>
+        <collision name='fltire_collision'>
+          <pose frame=''>0.045 0 0 0 1.57079632679 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.1 0 0</radius>
+              <length>0.09 0 0</length>
+            </cylinder>
+          </geometry>
+        </collision>
+        <visual name='fltire_visual'>
+          <pose frame=''>0.045 0 0 0 1.57079632679 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.1 0 0</radius>
+              <length>0.09 0 0</length>
+            </cylinder>
+          </geometry>
+        </visual>
+      </link>
+      <link name='frtire'>
+        <pose frame=''>0.342682 -0.225001 -0.074003 -1.07467 -2.4e-05 1.57078</pose>
+        <inertial>
+          <pose frame=''>0.045 -0 0 0 -0 0</pose>
+          <mass>2.65072</mass>
+          <inertia>
+            <ixx>0.0140819</ixx>
+            <ixy>6.05221e-19</ixy>
+            <ixz>2.56811e-19</ixz>
+            <iyy>0.00883021</iyy>
+            <iyz>-8.67362e-19</iyz>
+            <izz>0.00883021</izz>
+          </inertia>
+        </inertial>
+        <collision name='frtire_collision'>
+          <pose frame=''>0.045 0 0 0 1.57079632679 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.1 0 0</radius>
+              <length>0.09 0 0</length>
+            </cylinder>
+          </geometry>
+        </collision>
+        <visual name='frtire_visual'>
+          <pose frame=''>0.045 0 0 0 1.57079632679 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.1 0 0</radius>
+              <length>0.09 0 0</length>
+            </cylinder>
+          </geometry>
+        </visual>
+      </link>-->
+
+      <!-- Joints-->
+      <joint name='body2bro' type='spherical'>
+        <child>bro</child>
+        <parent>body</parent>
+        <axis>
+          <xyz>1 0 0</xyz>
+        </axis>
+      </joint>
+      <joint name='bro2axle' type='spherical'>
+        <child>backAxle</child>
+        <parent>bro</parent>
+        <axis>
+          <xyz>1 0 0</xyz>
+        </axis>
+      </joint>
+      <joint name='axle2bli' type='spherical'>
+        <child>bli</child>
+        <parent>backAxle</parent>
+        <axis>
+          <xyz>1 0 0</xyz>
+        </axis>
+      </joint>
+
+      <joint name='axle2blo' type='spherical'>
+        <child>blo</child>
+        <parent>backAxle</parent>
+        <axis>
+          <xyz>1 0 0</xyz>
+        </axis>
+      </joint>
+      <joint name='axle2blslower' type='spherical'>
+        <child>blslower</child>
+        <parent>backAxle</parent>
+        <axis>
+          <xyz>1 0 0</xyz>
+        </axis>
+      </joint>
+      <joint name='axle2blwheel' type='revolute'>
+        <child>blwheel</child>
+        <parent>backAxle</parent>
+        <axis>
+          <xyz>0.264117 0 0.964491</xyz>
+          <limit>
+            <lower>0</lower>
+            <upper>0</upper>
+            <effort>0</effort>
+            <velocity>0</velocity>
+          </limit>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+            <damping>10</damping>
+          </dynamics>
+          <use_parent_model_frame>1</use_parent_model_frame>
+        </axis>
+      </joint>
+      <joint name='blwheel2tire' type='continuous'>
+        <child>bltire</child>
+        <parent>blwheel</parent>
+        <axis>
+          <xyz>1 0 0</xyz>
+        </axis>
+      </joint>
+      <joint name='axle2bri' type='spherical'>
+        <child>bri</child>
+        <parent>backAxle</parent>
+        <axis>
+          <xyz>1 0 0</xyz>
+        </axis>
+      </joint>
+      <joint name='axle2brslower' type='spherical'>
+        <child>brslower</child>
+        <parent>backAxle</parent>
+        <axis>
+          <xyz>1 0 0</xyz>
+        </axis>
+      </joint>
+      <joint name='axle2brwheel' type='revolute'>
+        <child>brwheel</child>
+        <parent>backAxle</parent>
+        <axis>
+          <xyz>0.264117 0 0.964491</xyz>
+          <limit>
+            <lower>0</lower>
+            <upper>0</upper>
+            <effort>0</effort>
+            <velocity>0</velocity>
+          </limit>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+            <damping>10</damping>
+          </dynamics>
+          <use_parent_model_frame>1</use_parent_model_frame>
+        </axis>
+      </joint>
+      <joint name='brwheel2tire' type='continuous'>
+        <child>brtire</child>
+        <parent>brwheel</parent>
+        <axis>
+          <xyz>1 0 0</xyz>
+        </axis>
+      </joint>
+      <joint name='body2fro' type='spherical'>
+        <child>fro</child>
+        <parent>body</parent>
+        <axis>
+          <xyz>1 0 0</xyz>
+        </axis>
+      </joint>
+      <joint name='fro2Axle' type='spherical'>
+        <child>frontAxle</child>
+        <parent>fro</parent>
+        <axis>
+          <xyz>1 0 0</xyz>
+        </axis>
+      </joint>
+      <joint name='axle2fli' type='spherical'>
+        <child>fli</child>
+        <parent>frontAxle</parent>
+        <axis>
+          <xyz>1 0 0</xyz>
+        </axis>
+      </joint>
+      <joint name='axle2flo' type='spherical'>
+        <child>flo</child>
+        <parent>frontAxle</parent>
+        <axis>
+          <xyz>1 0 0</xyz>
+        </axis>
+      </joint>
+      <joint name='axle2flslower' type='spherical'>
+        <child>flslower</child>
+        <parent>frontAxle</parent>
+        <axis>
+          <xyz>1 0 0</xyz>
+        </axis>
+      </joint>
+      <joint name='axle2flwheel' type='revolute'>
+        <child>flwheel</child>
+        <parent>frontAxle</parent>
+        <axis>
+          <xyz>-0.264098 -2e-05 0.964496</xyz>
+          <limit>
+            <lower>-0.5</lower>
+            <upper>0.5</upper>
+          </limit>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+            <damping>10</damping>
+          </dynamics>
+          <use_parent_model_frame>1</use_parent_model_frame>
+        </axis>
+      </joint>
+      <joint name='flwheel2tire' type='continuous'>
+        <child>fltire</child>
+        <parent>flwheel</parent>
+        <axis>
+          <xyz>1 0 0</xyz>
+        </axis>
+      </joint>
+      <joint name='axle2fri' type='spherical'>
+        <child>fri</child>
+        <parent>frontAxle</parent>
+        <axis>
+          <xyz>1 0 0</xyz>
+        </axis>
+      </joint>
+      <joint name='axle2frslower' type='spherical'>
+        <child>frslower</child>
+        <parent>frontAxle</parent>
+        <axis>
+          <xyz>1 0 0</xyz>
+        </axis>
+      </joint>
+      <joint name='axle2frwheel' type='revolute'>
+        <child>frwheel</child>
+        <parent>frontAxle</parent>
+        <axis>
+          <xyz>0.264098 2e-05 -0.964496</xyz>
+          <limit>
+            <lower>-0.5</lower>
+            <upper>0.5</upper>
+          </limit>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+            <damping>10</damping>
+          </dynamics>
+          <use_parent_model_frame>1</use_parent_model_frame>
+        </axis>
+      </joint>
+      <joint name='frwheel2tire' type='continuous'>
+        <child>frtire</child>
+        <parent>frwheel</parent>
+        <axis>
+          <xyz>1 0 0</xyz>
+        </axis>
+      </joint>
+
+      <!-- Suspension Componenets -->
+      <joint name='brslower2upper' type='prismatic'>
+        <child>brsupper</child>
+        <parent>brslower</parent>
+        <axis>
+          <xyz>1 0 0</xyz>
+          <limit>
+            <lower>-0.00500</lower>
+            <upper>0.0075000</upper>
+            <effort>-1</effort>
+            <velocity>-1</velocity>
+          </limit>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+            <damping>0</damping>
+          </dynamics>
+        </axis>
+      </joint>
+      <joint name='blslower2upper' type='prismatic'>
+        <child>blsupper</child>
+        <parent>blslower</parent>
+        <axis>
+          <xyz>1 0 0</xyz>
+          <limit>
+            <lower>-0.00500</lower>
+            <upper>0.0075000</upper>
+            <effort>-1</effort>
+            <velocity>-1</velocity>
+          </limit>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+            <damping>0</damping>
+          </dynamics>
+        </axis>
+      </joint>
+      <joint name='frslower2upper' type='prismatic'>
+        <child>frsupper</child>
+        <parent>frslower</parent>
+        <axis>
+          <xyz>1 0 0</xyz>
+          <limit>
+            <lower>-0.00500</lower>
+            <upper>0.0075000</upper>
+            <effort>-1</effort>
+            <velocity>-1</velocity>
+          </limit>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+            <damping>0</damping>
+          </dynamics>
+        </axis>
+      </joint>
+      <joint name='flslower2upper' type='prismatic'>
+        <child>flsupper</child>
+        <parent>flslower</parent>
+        <axis>
+          <xyz>1 0 0</xyz>
+          <limit>
+            <lower>-0.00500</lower>
+            <upper>0.0075000</upper>
+            <effort>-1</effort>
+            <velocity>-1</velocity>
+          </limit>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+            <damping>0</damping>
+          </dynamics>
+        </axis>
+      </joint>
+    </model>
+  </world>
+
+</sdf>
