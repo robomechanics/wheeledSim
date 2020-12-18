@@ -1,7 +1,7 @@
 import pybullet as p
 import time
 import torch
-from cliffordRobot import Clifford
+from robots.clifford.cliffordRobot import Clifford
 from simController import simController as simController
 import ray
 import numpy as np
@@ -23,7 +23,7 @@ class singleProcess:
         # start sim
         physicsClientId = p.connect(p.DIRECT)
         # initialize clifford robot
-        robot = Clifford(params=cliffordParams,physicsClientId=physicsClientId)
+        robot = Clifford(params=cliffordParamsIn,physicsClientId=physicsClientId)
         # initialize simulation controller
         self.sim = simController(robot,simulationParamsIn=simulationParamsIn,senseParamsIn=senseParamsIn,terrainMapParamsIn=terrainMapParamsIn,terrainParamsIn=terrainParamsIn,physicsClientId=physicsClientId)
         stateAction,newState,terminateFlag = self.sim.controlLoopStep([0,0])
@@ -85,7 +85,33 @@ class singleProcess:
     def outputReplayBuffer(self):
         return self.replayBuffer
 
+def rayMultiSimDataset(numParallelSims,numTrajectoriesPerSim,trajectoryLength,rootDir,startNewFile):
+    # load all simulation parameters
+    [simParams,cliffordParams,terrainMapParams,terrainParams,senseParams] = np.load(rootDir+'allSimParams.npy',allow_pickle=True)
+    # start all parallel simulations
+    processes = [singleProcess.remote(i) for i in range(numParallelSims)]
+    for process in processes:
+        ray.get(process.setup.remote(numTrajectoriesPerSim,trajectoryLength,root_dir=rootDir,
+            simulationParamsIn=simParams,cliffordParamsIn=cliffordParams,terrainMapParamsIn=terrainMapParams,terrainParamsIn=terrainParams,senseParamsIn=senseParams))
+    print("finished initialization")
+    results = ray.get([processes[i].gatherSimData.remote() for i in range(numParallelSims)])
+    # write metadata csv file
+    if startNewFile:
+        csvFile = open(rootDir+'meta.csv', 'w', newline='')
+    else:
+        csvFile = open(rootDir+'meta.csv', 'a', newline='')
+    csvWriter = csv.writer(csvFile,delimiter=',')
+    if startNewFile:
+        csvWriter.writerow(['filenames','trajectoryLengths'])
+    for result in results:
+        for i in range(len(result[0])):
+            csvWriter.writerow([result[0][i],result[1][i]])
+    csvFile.flush()
+
+
 if __name__=="__main__":
+    rayMultiSimDataset(numParallelSims=12,numTrajectoriesPerSim=1024,trajectoryLength=64,rootDir='terrainMapData/',startNewFile=True)
+    """
     numParallelSims = 12
     #totalNumTrajectories = 1024#4096
     #numTrajectoriesPerSim = int(np.ceil(totalNumTrajectories/numParallelSims))
@@ -115,3 +141,4 @@ if __name__=="__main__":
         for i in range(len(result[0])):
             csvWriter.writerow([result[0][i],result[1][i]])
     csvFile.flush()
+    """

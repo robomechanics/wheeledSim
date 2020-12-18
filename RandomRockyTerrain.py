@@ -17,12 +17,12 @@ class RandomRockyTerrain:
                         "mapHeight":300, # height of matrix
                         "widthScale":0.1, # each pixel corresponds to this distance
                         "heightScale":0.1}
-        terrainMapParams = baseMapParams.copy()
-        terrainMapParams.update(terrainMapParamsIn)
+        self.terrainMapParams = baseMapParams.copy()
+        self.terrainMapParams.update(terrainMapParamsIn)
         # store parameters
-        self.mapWidth = terrainMapParams["mapWidth"] 
-        self.mapHeight = terrainMapParams["mapHeight"]
-        self.meshScale = [terrainMapParams["widthScale"],terrainMapParams["heightScale"],1]
+        self.mapWidth = self.terrainMapParams["mapWidth"] 
+        self.mapHeight = self.terrainMapParams["mapHeight"]
+        self.meshScale = [self.terrainMapParams["widthScale"],self.terrainMapParams["heightScale"],1]
         self.mapSize = [(self.mapWidth-1)*self.meshScale[0],(self.mapHeight-1)*self.meshScale[1]] # dimension of terrain (meters x meters)
         # define x and y of map grid
         self.gridX = np.linspace(-self.mapSize[0]/2.0,self.mapSize[0]/2.0,self.mapWidth)
@@ -37,7 +37,9 @@ class RandomRockyTerrain:
                             "cellHeightScale":0.9,
                             "smoothing":0.7,
                             "perlinScale":2.5,
-                            "perlinHeightScale":0.1}
+                            "perlinHeightScale":0.1,
+                            "flatRadius":1,
+                            "blendRadius":0.5}
         terrainParams = baseTerrainParams.copy()
         terrainParams.update(terrainParamsIn)
         # use gridZ that is inputted
@@ -52,6 +54,14 @@ class RandomRockyTerrain:
             smallNoise = self.perlinNoise(self.gridX.reshape(-1),self.gridY.reshape(-1),terrainParams["perlinScale"],terrainParams["perlinHeightScale"])
             smallNoise = smallNoise.reshape(self.gridX.shape)
             self.gridZ = (blockHeights+smallNoise)
+            # make center flat for initial robot start position
+            distFromOrigin = np.sqrt(self.gridX*self.gridX + self.gridY*self.gridY)
+            flatIndices = distFromOrigin<terrainParams['flatRadius']
+            flatHeight = np.mean(self.gridZ[flatIndices])
+            self.gridZ[flatIndices] = flatHeight
+            distFromFlat = distFromOrigin - terrainParams['flatRadius']
+            blendIndices = distFromFlat < terrainParams['blendRadius']
+            self.gridZ[blendIndices] = flatHeight + (self.gridZ[blendIndices]-flatHeight)*distFromFlat[blendIndices]/terrainParams['flatRadius']
             self.gridZ = self.gridZ-np.min(self.gridZ)
         # delete previous terrain if exists
         if isinstance(self.terrainShape,int):

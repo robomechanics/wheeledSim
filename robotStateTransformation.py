@@ -8,6 +8,7 @@ class robotStateTransformation(object):
     def __init__(self,startState,numParticles = 1):
         self.currentState = startState.repeat_interleave(numParticles,dim=0)
         self.originalDimPrefix = self.currentState.shape[0:len(self.currentState.shape)-1]
+        self.device = self.currentState.device
     def clone(self):
         output = robotStateTransformation(self.currentState.clone())
         output.originalDimPrefix = self.originalDimPrefix
@@ -54,6 +55,31 @@ class robotStateTransformation(object):
         posHeading = torch.cat((self.currentState[:,0:3],heading),dim=1)
         self.currentState = self.currentState.view(self.originalDimPrefix+self.currentState.shape[-1:])
         return posHeading.view(self.originalDimPrefix+posHeading.shape[-1:])
+    def getHeightMap(self,terrainMap,terrainMapParams,senseParams):
+        # define map pixel locations relative to robot
+        pixelXRelRobot=torch.linspace(-senseParams['senseDim'][0]/2,senseParams['senseDim'][0]/2,senseParams['senseResolution'][0],device=self.device)
+        pixelYRelRobot=torch.linspace(-senseParams['senseDim'][1]/2,senseParams['senseDim'][1]/2,senseParams['senseResolution'][1],device=self.device)
+        pixelXRelRobot,pixelYRelRobot=torch.meshgrid(pixelXRelRobot,pixelYRelRobot)
+        pixelLocRobot=torch.cat((pixelXRelRobot.unsqueeze(-1),pixelYRelRobot.unsqueeze(-1)),dim=-1).reshape(-1,2).transpose(0,1)
+        # rotate and translate pixel locations to get world position
+        posHeading = self.getPosHeading()
+        posHeading = posHeading.view(-1,posHeading.shape[-1])
+        rotationRow1 = torch.cat((torch.cos(posHeading[:,3]).unsqueeze(-1),torch.sin(posHeading[:,3]).unsqueeze(-1)),dim=-1)
+        rotationRow2 = torch.cat((-torch.sin(posHeading[:,3]).unsqueeze(-1),torch.cos(posHeading[:,3]).unsqueeze(-1)),dim=-1)
+        rotations = torch.cat((rotationRow1.unsqueeze(-1),rotationRow2.unsqueeze(-1)),dim=-1)
+        translations = posHeading[:,0:2]
+        # rotate and translate pixels
+        pixelLocRobot = pixelLocRobot.unsqueeze(0).repeat(posHeading.shape[0],1,1)
+        pixelLocWorld = torch.bmm(rotations,pixelLocRobot)+translations.unsqueeze(-1)
+        # scale to terrainMapSize
+        pixelLocWorld[:,0,:] = pixelLocWorld[:,0,:]/(terrainMapParams['mapWidth']-1)/terrainMapParams['widthScale']*2.
+        pixelLocWorld[:,1,:] = pixelLocWorld[:,1,:]/(terrainMapParams['mapHeight']-1)/terrainMapParams['heightScale']*2.
+        pixelLocWorld = pixelLocWorld.transpose(1,2).reshape(-1,pixelXRelRobot.shape[0],pixelXRelRobot.shape[1],2)
+        heightMaps = torch.from_numpy(terrainMap).float().to(self.device).unsqueeze(0).unsqueeze(0).repeat(pixelLocWorld.shape[0],1,1,1)
+        heightMaps = torch.nn.functional.grid_sample(heightMaps,pixelLocWorld,align_corners=True).squeeze(dim=1)
+        heightMaps = heightMaps-posHeading[:,2].unsqueeze(1).unsqueeze(1).repeat(1,heightMaps.shape[1],heightMaps.shape[2])
+        heightMaps = heightMaps.transpose(1,2)
+        return heightMaps.view(self.originalDimPrefix+heightMaps.shape[-2:])
     def transformMul(self,p1,q1,p2,q2):
         qout = self.qmul(q1,q2)
         pout = p1+self.qrot(q1,p2)

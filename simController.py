@@ -54,13 +54,16 @@ class simController:
         baseSenseParams = {"senseDim":[5,5], # width (meter or angle) and height (meter or angle) of terrain map or point cloud
                             "lidarAngleOffset":[0,0],
                             "lidarRange":10,
-                            "senseResolution":[300,300], # array giving resolution of map output (num pixels wide x num pixels high)
+                            "senseResolution":[100,100], # array giving resolution of map output (num pixels wide x num pixels high)
                             "removeInvalidPointsInPC":False, # remove invalid points in point cloud
                             "senseType":0, # 0 for terrainMap, 1 for lidar depth image, 2 for lidar point cloud
                             "sensorPose":[[0,0,0],[0,0,0,1]], # pose of sensor relative to body
                             "recordJointStates":False} # whether to record joint data or not
         self.senseParams = baseSenseParams.copy()
         self.senseParams.update(senseParamsIn)
+
+        # random sinsusoidal drive tracking
+        self.sinActionT = np.zeros(2)
     def newTerrain(self,copyGridZ=None):
         self.terrain.generate(self.terrainParamsIn,copyGridZ = copyGridZ)
     def resetRobot(self,doFall=True):
@@ -140,8 +143,12 @@ class simController:
     def sensing(self,robotPose,senseType=None,expandDim=False):
         if senseType is None:
             senseType = self.senseParams["senseType"]
+        if not isinstance(senseType,int):
+            return [self.sensing(robotPose,senseType[i],expandDim) for i in range(len(senseType))]
         sensorAbsolutePose = p.multiplyTransforms(robotPose[0],robotPose[1],self.senseParams["sensorPose"][0],self.senseParams["sensorPose"][1])
-        if senseType == 0: #get terrain height map
+        if senseType == -1: # no sensing
+            return None
+        elif senseType == 0: #get terrain height map
             sensorData = self.terrain.sensedHeightMap(sensorAbsolutePose,self.senseParams["senseDim"],self.senseParams["senseResolution"])
         else: # get lidar data
             horzAngles = np.linspace(-self.senseParams["senseDim"][0]/2.,self.senseParams["senseDim"][0]/2.,self.senseParams["senseResolution"][0]+1)+self.senseParams["lidarAngleOffset"][0]
@@ -182,6 +189,10 @@ class simController:
     # generate random drive action
     def randomDriveAction(self):
         return self.randDrive.multiGenNoise(50)
+    def randomDriveSinusoid(self):
+        self.sinActionT = self.sinActionT+np.random.normal([0.1,0.5],[0.01,0.2])
+        return np.sin(self.sinActionT)
+
 
 if __name__=="__main__":
     # all parameters of robot/ simulation
@@ -193,13 +204,13 @@ if __name__=="__main__":
                 "contactSlop":0.0001,
                 "moveThreshold":0.1,
                 "maxStopMoveLength":25}
-    cliffordParams={"maxThrottle":30, # dynamical parameters of clifford robot
+    cliffordParams={"maxThrottle":20, # dynamical parameters of clifford robot
                     "maxSteerAngle":0.5,
-                    "susOffset":-0.001,
-                    "susLowerLimit":-0.02,
+                    "susOffset":-0.00,
+                    "susLowerLimit":-0.01,
                     "susUpperLimit":0.00,
-                    "susDamping":100,
-                    "susSpring":50000,
+                    "susDamping":10,
+                    "susSpring":500,
                     "traction":1.25,
                     "masScale":1.0}
     terrainMapParams = {"mapWidth":300, # width of matrix
@@ -222,9 +233,9 @@ if __name__=="__main__":
                     "sensorPose":[[0,0,0.3],[0,0,0,1]]} # pose of sensor relative to body
     lidarPCParams = lidarDepthParams.copy()
     lidarPCParams["senseType"] = 2
-    senseParams = lidarDepthParams # use this kind of sensing
+    senseParams = heightMapSenseParams # use this kind of sensing
     # save simulation parameters for future reuse
-    #np.save('exampleAllSimParams.npy',[simParams,cliffordParams,terrainMapParams,terrainParams,senseParams])
+    np.save('exampleAllSimParams.npy',[simParams,cliffordParams,terrainMapParams,terrainParams,senseParams])
     # start simulation
     physicsClient = p.connect(p.GUI)#or p.DIRECT for non-graphical version
     # initialize clifford robot
@@ -237,11 +248,12 @@ if __name__=="__main__":
         import matplotlib.pyplot as plt
         fig = plt.figure()
     # simulate trajectory of length 100
-    for i in range(100):
+    for i in range(10000):
         # step simulation
-        data = sim.controlLoopStep(sim.randomDriveAction())
-        if data[2]: # simulation failed, stop simulation
-            break # restart trjectory
+        data = sim.controlLoopStep(1-2.*np.random.rand(2))#sim.randomDriveSinusoid())# sim.randomDriveAction())
+        if data[2]: # simulation failed, restartsim
+            sim.newTerrain()
+            sim.resetRobot()
         else:
             if plotSensorReadings:
                 sensorData = data[0][1]

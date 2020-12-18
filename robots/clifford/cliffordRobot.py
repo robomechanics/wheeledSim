@@ -22,7 +22,8 @@ class Clifford:
                         "susDamping":10,
                         "susSpring":100,
                         "traction":1.5,
-                        "massScale":1.0}
+                        "massScale":1.0,
+                        "tireMassScale":1.0}
         # change default params if defined
         for param in self.params:
             if param in params:
@@ -85,6 +86,7 @@ class Clifford:
             p.changeVisualShape(self.cliffordID,self.linkNameToID[tire],rgbaColor=[0.15,0.15,0.15,1],specularColor=[0.15,0.15,0.15,1],physicsClientId=self.physicsClientId)
     def loosenModel(self):
         nJoints = p.getNumJoints(self.cliffordID,physicsClientId=self.physicsClientId)
+        tireIndices = [self.linkNameToID[name] for name in ['frtire','fltire','brtire','bltire']]
         for i in range(nJoints):
             if len(p.getJointStateMultiDof(bodyUniqueId=self.cliffordID,jointIndex=i,physicsClientId=self.physicsClientId)[0]) == 4:
                 p.setJointMotorControlMultiDof(bodyUniqueId=self.cliffordID,
@@ -95,8 +97,11 @@ class Clifford:
                                                 velocityGain=0,
                                                 force=[0,0,0],physicsClientId=self.physicsClientId)
                 dynamicsData = p.getDynamicsInfo(self.cliffordID,i,physicsClientId=self.physicsClientId)
-                newMass = dynamicsData[0]*self.params["massScale"]
-                newInertia = [dynamicsData[2][i]*self.params["massScale"] for i in range(len(dynamicsData[2]))]
+                massScale = self.params["massScale"]
+                if i in tireIndices:
+                    massScale = massScale*self.params['tireMassScale']
+                newMass = dynamicsData[0]*massScale
+                newInertia = [dynamicsData[2][j]*massScale for j in range(len(dynamicsData[2]))]
                 p.changeDynamics(self.cliffordID,i,mass = newMass, localInertiaDiagonal=newInertia,linearDamping=0.2,angularDamping=0.2,restitution=0,physicsClientId=self.physicsClientId)
         springJointNames = ['brslower2upper','blslower2upper','frslower2upper','flslower2upper']
         springConstant = 0
@@ -122,14 +127,14 @@ class Clifford:
         linkcm2world = p.invertTransform(linkState[0],linkState[1])
         linkcm2joint = p.multiplyTransforms(linkcm2world[0],linkcm2world[1],world2joint[0],world2joint[1])
         c = p.createConstraint(self.cliffordID,-1,self.cliffordID,self.linkNameToID[linkName],p.JOINT_POINT2POINT,[0,0,0],body2joint[0],linkcm2joint[0],physicsClientId=self.physicsClientId)
-        c = p.createConstraint(self.cliffordID,
-                               self.jointNameToID['axle2frwheel'],
-                               self.cliffordID,
-                               self.jointNameToID['axle2flwheel'],
-                               jointType=p.JOINT_GEAR,
-                               jointAxis=[0, 1, 0],
-                               parentFramePosition=[0, 0, 0],
-                               childFramePosition=[0, 0, 0],physicsClientId=self.physicsClientId)
+        #c = p.createConstraint(self.cliffordID,
+        #                       self.jointNameToID['axle2frwheel'],
+        #                       self.cliffordID,
+        #                       self.jointNameToID['axle2flwheel'],
+        #                       jointType=p.JOINT_GEAR,
+        #                       jointAxis=[0, 1, 0],
+        #                       parentFramePosition=[0, 0, 0],
+        #                       childFramePosition=[0, 0, 0],physicsClientId=self.physicsClientId)
         p.changeConstraint(c, gearRatio=-1, maxForce=10000,physicsClientId=self.physicsClientId)
 
     def changeTraction(self,newTraction=None):
@@ -159,8 +164,17 @@ class Clifford:
         p.setJointMotorControl2(bodyUniqueId=self.cliffordID, 
         jointIndex=self.jointNameToID['axle2frwheel'], 
         controlMode=p.POSITION_CONTROL,
+        maxVelocity = 10,
         targetPosition = angle*self.params["maxSteerAngle"],
         force = maxForce,physicsClientId=self.physicsClientId)
+        
+        p.setJointMotorControl2(bodyUniqueId=self.cliffordID, 
+        jointIndex=self.jointNameToID['axle2flwheel'], 
+        controlMode=p.POSITION_CONTROL,
+        maxVelocity = 10,
+        targetPosition = angle*self.params["maxSteerAngle"],
+        force = maxForce,physicsClientId=self.physicsClientId)
+        
         #p.setJointMotorControl2(bodyUniqueId=self.cliffordID, 
         #jointIndex=self.jointNameToID['axle2flwheel'], 
         #controlMode=p.POSITION_CONTROL,
