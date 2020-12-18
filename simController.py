@@ -250,7 +250,7 @@ if __name__=="__main__":
     # simulate trajectory of length 100
     for i in range(10000):
         # step simulation
-        data = sim.controlLoopStep(1-2.*np.random.rand(2))#sim.randomDriveSinusoid())# sim.randomDriveAction())
+        data = sim.controlLoopStep(sim.randomDriveSinusoid())# sim.randomDriveAction())
         if data[2]: # simulation failed, restartsim
             sim.newTerrain()
             sim.resetRobot()
