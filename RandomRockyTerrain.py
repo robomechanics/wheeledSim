@@ -58,11 +58,12 @@ class RandomRockyTerrain:
             # make center flat for initial robot start position
             distFromOrigin = np.sqrt(self.gridX*self.gridX + self.gridY*self.gridY)
             flatIndices = distFromOrigin<terrainParams['flatRadius']
-            flatHeight = np.mean(self.gridZ[flatIndices])
-            self.gridZ[flatIndices] = flatHeight
-            distFromFlat = distFromOrigin - terrainParams['flatRadius']
-            blendIndices = distFromFlat < terrainParams['blendRadius']
-            self.gridZ[blendIndices] = flatHeight + (self.gridZ[blendIndices]-flatHeight)*distFromFlat[blendIndices]/terrainParams['flatRadius']
+            if flatIndices.any():
+                flatHeight = np.mean(self.gridZ[flatIndices])
+                self.gridZ[flatIndices] = flatHeight
+                distFromFlat = distFromOrigin - terrainParams['flatRadius']
+                blendIndices = distFromFlat < terrainParams['blendRadius']
+                self.gridZ[blendIndices] = flatHeight + (self.gridZ[blendIndices]-flatHeight)*distFromFlat[blendIndices]/terrainParams['flatRadius']
             self.gridZ = self.gridZ-np.min(self.gridZ)
         # delete previous terrain if exists
         if isinstance(self.terrainShape,int):
