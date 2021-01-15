@@ -3,6 +3,7 @@
 Maintainer: Sean J. Wang, sjw2@andrew.cmu.edu
 ## Installation
 ### Required Dependencies
+- [Python 3]
 - [PyBullet](pybullet.org) Physics simulation engine
 - [NumPy](numpy.org)
 - [SciPy](scipy.org)
@@ -11,8 +12,10 @@ Maintainer: Sean J. Wang, sjw2@andrew.cmu.edu
 - [PyTorch](pytorch.org)
 - [matplotlib]
 ## Basic Usage
-run simConroller.py for an example
+run simController.py for an example
 ### simController
+The simController class handles controlling the robot and generation of new terrains. It can also be used to get the robot's state and sensor data (LiDAR or heightmap)
 ### RandomRockyTerrain
-Generates random terrain
+The RandomRockyTerrain class handles generation of random terrains. It generates terrains by first creating a Voronoi partition to create random blocks, smooths out edges, then adds random perlin noise
 ### robot controllers
+The simController can handle different types of wheeled robots. Currently, only one is included which is the Clifford Robot.
