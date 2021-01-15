@@ -15,22 +15,22 @@ class simController:
                             "contactSlop":0.0001,
                             "moveThreshold":0,
                             "maxStopMoveLength":np.inf}
-        simulationParams = baseSimulationParams.copy()
-        simulationParams.update(simulationParamsIn)
+        self.simulationParams = baseSimulationParams.copy()
+        self.simulationParams.update(simulationParamsIn)
         
         # set up simulation
         self.physicsClientId=physicsClientId
-        self.timeStep = simulationParams["timeStep"]
+        self.timeStep = self.simulationParams["timeStep"]
         # Each control loop makes this many simulation steps. The period of a control loop is timeStep*stepsPerControlLoop
-        self.stepsPerControlLoop=simulationParams["stepsPerControlLoop"]
-        p.setPhysicsEngineParameter(numSolverIterations=simulationParams["numSolverIterations"],
-            contactBreakingThreshold=simulationParams["contactBreakingThreshold"],contactSlop=simulationParams["contactSlop"],
+        self.stepsPerControlLoop=self.simulationParams["stepsPerControlLoop"]
+        p.setPhysicsEngineParameter(numSolverIterations=self.simulationParams["numSolverIterations"],
+            contactBreakingThreshold=self.simulationParams["contactBreakingThreshold"],contactSlop=self.simulationParams["contactSlop"],
             physicsClientId=self.physicsClientId)
-        p.setGravity(0,0,simulationParams["gravity"],physicsClientId=self.physicsClientId)
+        p.setGravity(0,0,self.simulationParams["gravity"],physicsClientId=self.physicsClientId)
         p.setTimeStep(self.timeStep,physicsClientId=self.physicsClientId)
 
         # set up terrain
-        self.terrainParamsIn = terrainParamsIn
+        self.terrainParams = terrainParamsIn
         if existingTerrain!=None:
             self.terrain = existingTerrain
         else:
@@ -38,14 +38,15 @@ class simController:
             self.newTerrain()
 
         # set up robot
+        self.camFollowBot = False
         self.robot = robot
         self.resetRobot()
         self.lastStateRecordFlag = False # Flag to tell if last state of robot has been recorded or not
         self.randDrive = ouNoise()
 
         # Parameters below are for determining if robot is stuck and haven't moved in a while
-        self.moveThreshold = simulationParams["moveThreshold"]*simulationParams["moveThreshold"] # store square distance for easier computation later
-        self.maxStopMoveLength = simulationParams["maxStopMoveLength"]
+        self.moveThreshold = self.simulationParams["moveThreshold"]*self.simulationParams["moveThreshold"] # store square distance for easier computation later
+        self.maxStopMoveLength = self.simulationParams["maxStopMoveLength"]
         self.lastX = 0
         self.lastY = 0
         self.stopMoveCount =0
@@ -65,10 +66,13 @@ class simController:
         # random sinsusoidal drive tracking
         self.sinActionT = np.zeros(2)
     def newTerrain(self,copyGridZ=None):
-        self.terrain.generate(self.terrainParamsIn,copyGridZ = copyGridZ)
-    def resetRobot(self,doFall=True):
-        safeFallHeight = self.terrain.maxLocalHeight([0,0],1)+0.2
-        self.robot.reset([[0,0,safeFallHeight],[0,0,0,1]])
+        self.terrain.generate(self.terrainParams,copyGridZ = copyGridZ)
+    def resetRobot(self,doFall=True,pos=[0,0],orien=[0,0,0,1]):
+        if len(pos)>2:
+            safeFallHeight = pos[2]
+        else:
+            safeFallHeight = self.terrain.maxLocalHeight(pos,1)+0.3
+        self.robot.reset([[pos[0],pos[1],safeFallHeight],orien])
         if doFall:
             self.robotFall()
         self.stopMoveCount = 0
@@ -80,6 +84,14 @@ class simController:
         self.robot.updateSpringForce()
         p.stepSimulation(physicsClientId=self.physicsClientId)
         self.lastStateRecordFlag = False
+        if self.camFollowBot:
+            pose = self.robot.getPositionOrientation()
+            pos = pose[0]
+            orien = pose[1]
+            forwardDir = p.multiplyTransforms([0,0,0],orien,[1,0,0],[0,0,0,1])[0]
+            headingAngle = np.arctan2(forwardDir[1],forwardDir[0])*180/np.pi-90
+            p.resetDebugVisualizerCamera(1.0,headingAngle,-15,pos,physicsClientId=self.physicsClientId)
+
     def controlLoopStep(self,driveCommand):
         throttle = driveCommand[0]
         steering = driveCommand[1]
@@ -147,7 +159,7 @@ class simController:
             return [self.sensing(robotPose,senseType[i],expandDim) for i in range(len(senseType))]
         sensorAbsolutePose = p.multiplyTransforms(robotPose[0],robotPose[1],self.senseParams["sensorPose"][0],self.senseParams["sensorPose"][1])
         if senseType == -1: # no sensing
-            return None
+            sensorData = np.array([])
         elif senseType == 0: #get terrain height map
             sensorData = self.terrain.sensedHeightMap(sensorAbsolutePose,self.senseParams["senseDim"],self.senseParams["senseResolution"])
         else: # get lidar data
@@ -233,9 +245,8 @@ if __name__=="__main__":
                     "sensorPose":[[0,0,0.3],[0,0,0,1]]} # pose of sensor relative to body
     lidarPCParams = lidarDepthParams.copy()
     lidarPCParams["senseType"] = 2
-    senseParams = heightMapSenseParams # use this kind of sensing
-    # save simulation parameters for future reuse
-    np.save('exampleAllSimParams.npy',[simParams,cliffordParams,terrainMapParams,terrainParams,senseParams])
+    noSenseParams = {"senseType":-1}
+    senseParams = noSenseParams # use this kind of sensing
     # start simulation
     physicsClient = p.connect(p.GUI)#or p.DIRECT for non-graphical version
     # initialize clifford robot
@@ -243,7 +254,9 @@ if __name__=="__main__":
     robot = Clifford(params=cliffordParams,physicsClientId=physicsClient)
     # initialize simulation controller
     sim = simController(robot,simulationParamsIn=simParams,senseParamsIn=senseParams,terrainMapParamsIn=terrainMapParams,terrainParamsIn=terrainParams,physicsClientId=physicsClient)
-    plotSensorReadings = True # plot sensor reading during simulation?
+    # save simulation parameters for future reuse (sim params, robot params, terrain map params, terrain params, sensing params)
+    np.save('exampleAllSimParams.npy',[sim.simulationParams,robot.params,sim.terrain.terrainMapParams,sim.terrainParams,sim.senseParams])
+    plotSensorReadings = False # plot sensor reading during simulation?
     if plotSensorReadings:
         import matplotlib.pyplot as plt
         fig = plt.figure()
@@ -251,6 +264,7 @@ if __name__=="__main__":
     for i in range(10000):
         # step simulation
         data = sim.controlLoopStep(sim.randomDriveSinusoid())# sim.randomDriveAction())
+        print(data[0][1])
         if data[2]: # simulation failed, restartsim
             sim.newTerrain()
             sim.resetRobot()

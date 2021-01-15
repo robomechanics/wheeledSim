@@ -36,6 +36,7 @@ class singleProcess:
             self.trajectoryData.append(torch.from_numpy(np.array(stateAction[i])).unsqueeze(0).float())
         for i in range(len(newState)):
             self.trajectoryData.append(torch.from_numpy(np.array(newState[i])).unsqueeze(0).float())
+        self.trajectoryData.append(torch.from_numpy(np.array(self.sim.terrain.gridZ)).float())
     def addSampleToTrajData(self,stateAction,newState):
         for i in range(len(stateAction)):
             self.trajectoryData[i] = torch.cat((self.trajectoryData[i],torch.from_numpy(np.array(stateAction[i])).unsqueeze(0).float()),dim=0)
@@ -110,7 +111,7 @@ def rayMultiSimDataset(numParallelSims,numTrajectoriesPerSim,trajectoryLength,ro
 
 
 if __name__=="__main__":
-    rayMultiSimDataset(numParallelSims=12,numTrajectoriesPerSim=1024,trajectoryLength=64,rootDir='terrainMapData/',startNewFile=True)
+    rayMultiSimDataset(numParallelSims=12,numTrajectoriesPerSim=1024,trajectoryLength=64,rootDir='clifford_worldMap/',startNewFile=True)
     """
     numParallelSims = 12
     #totalNumTrajectories = 1024#4096

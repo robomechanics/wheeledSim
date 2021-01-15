@@ -30,6 +30,7 @@ class RandomRockyTerrain:
         self.gridX,self.gridY = np.meshgrid(self.gridX,self.gridY)
         self.terrainShape = [] # used to replace terrain shape if it already exists
         self.terrainBody = []
+        self.color = [0.82,0.71,0.55,1]
     # generate new terrain. (Delete old terrain if exists)
     def generate(self,terrainParamsIn={},copyGridZ = None):
         baseTerrainParams = {"AverageAreaPerCell":1,
@@ -78,7 +79,7 @@ class RandomRockyTerrain:
         # position terrain correctly
         p.resetBasePositionAndOrientation(self.terrainBody,[-self.meshScale[0]/2.,-self.meshScale[1]/2.,self.terrainOffset], [0,0,0,1],physicsClientId=self.physicsClientId)
         # change to brown terrain
-        p.changeVisualShape(self.terrainBody, -1, textureUniqueId=-1,rgbaColor=[0.82,0.71,0.55,1],physicsClientId=self.physicsClientId)
+        p.changeVisualShape(self.terrainBody, -1, textureUniqueId=-1,rgbaColor=self.color,physicsClientId=self.physicsClientId)
         # change contact parameters of terrain
         p.changeDynamics(self.terrainBody,-1,collisionMargin=0.01,restitution=0,contactStiffness=30000,contactDamping=1000,physicsClientId=self.physicsClientId)
     def randomSteps(self,xPoints,yPoints,numCells,cellPerlinScale,cellHeightScale):

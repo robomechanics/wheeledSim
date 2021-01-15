@@ -1,14 +1,29 @@
 import torch
+import time
 class robotStateTransformation(object):
     """
     This class handles the state data of the robot. It records the current state of the robot,
     and transforms the robot state based on predicted movements. It also can output data in a
     format for neural network predictions
     """
-    def __init__(self,startState,numParticles = 1):
+    def __init__(self,startState,numParticles = 1,terrainMap=None,terrainMapParams=None,senseParams=None):
         self.currentState = startState.repeat_interleave(numParticles,dim=0)
         self.originalDimPrefix = self.currentState.shape[0:len(self.currentState.shape)-1]
         self.device = self.currentState.device
+        #self.terrainMap = terrainMap
+        if terrainMap is None:
+            self.terrainMap = terrainMap
+        else:
+            self.terrainMap = terrainMap.repeat_interleave(numParticles,dim=0)
+        self.terrainMapParams = terrainMapParams
+        self.senseParams = senseParams
+        self.qmulMat = torch.zeros((1,4,16),device=self.device,dtype=self.currentState.dtype)
+        self.qmulMat[0,[0,0,0,1,1,1,2,2,2,3],[12,3,9,13,2,7,14,4,11,15]] = 1
+        self.qmulMat[0,[0,1,2,3,3,3],[6,8,1,0,5,10]] = -1
+        #for index  in [[0,0,12],[0,0,3],[0,0,9],[0,1,13],[0,1,2],[0,1,7],[0,2,14],[0,2,4],[0,2,11],[0,3,15]]:
+        #    self.qmulMat[index[0],index[1],index[2]] = 1
+        #for index  in [[0,0,6],[0,1,8],[0,2,1],[0,3,0],[0,3,5],[0,3,10]]:
+        #    self.qmulMat[index[0],index[1],index[2]] = -1
     def clone(self):
         output = robotStateTransformation(self.currentState.clone())
         output.originalDimPrefix = self.originalDimPrefix
@@ -55,7 +70,15 @@ class robotStateTransformation(object):
         posHeading = torch.cat((self.currentState[:,0:3],heading),dim=1)
         self.currentState = self.currentState.view(self.originalDimPrefix+self.currentState.shape[-1:])
         return posHeading.view(self.originalDimPrefix+posHeading.shape[-1:])
-    def getHeightMap(self,terrainMap,terrainMapParams,senseParams):
+    def getHeightMap(self,terrainMap=None,terrainMapParams=None,senseParams=None):
+        if terrainMap is None:
+            terrainMap = self.terrainMap
+        if terrainMapParams is None:
+            terrainMapParams = self.terrainMapParams
+        if senseParams is None:
+            senseParams = self.senseParams
+        if len(terrainMap.shape)-1 < len(self.currentState.shape):
+            terrainMap = terrainMap.unsqueeze(1).repeat(1,self.currentState.shape[1],1,1)
         # define map pixel locations relative to robot
         pixelXRelRobot=torch.linspace(-senseParams['senseDim'][0]/2,senseParams['senseDim'][0]/2,senseParams['senseResolution'][0],device=self.device)
         pixelYRelRobot=torch.linspace(-senseParams['senseDim'][1]/2,senseParams['senseDim'][1]/2,senseParams['senseResolution'][1],device=self.device)
@@ -75,7 +98,8 @@ class robotStateTransformation(object):
         pixelLocWorld[:,0,:] = pixelLocWorld[:,0,:]/(terrainMapParams['mapWidth']-1)/terrainMapParams['widthScale']*2.
         pixelLocWorld[:,1,:] = pixelLocWorld[:,1,:]/(terrainMapParams['mapHeight']-1)/terrainMapParams['heightScale']*2.
         pixelLocWorld = pixelLocWorld.transpose(1,2).reshape(-1,pixelXRelRobot.shape[0],pixelXRelRobot.shape[1],2)
-        heightMaps = torch.from_numpy(terrainMap).float().to(self.device).unsqueeze(0).unsqueeze(0).repeat(pixelLocWorld.shape[0],1,1,1)
+        terrainMap = terrainMap.view(-1,terrainMap.shape[-2],terrainMap.shape[-1])
+        heightMaps = terrainMap.to(self.device).unsqueeze(1)
         heightMaps = torch.nn.functional.grid_sample(heightMaps,pixelLocWorld,align_corners=True).squeeze(dim=1)
         heightMaps = heightMaps-posHeading[:,2].unsqueeze(1).unsqueeze(1).repeat(1,heightMaps.shape[1],heightMaps.shape[2])
         heightMaps = heightMaps.transpose(1,2)
@@ -90,19 +114,20 @@ class robotStateTransformation(object):
         Expects two equally-sized tensors of shape (*, 4), where * denotes any number of dimensions.
         Returns q*r as a tensor of shape (*, 4).
         """
-        assert q.shape[-1] == 4
-        assert r.shape[-1] == 4
-
+        #assert q.shape[-1] == 4
+        #assert r.shape[-1] == 4
         original_shape = q.shape
-        
         # Compute outer product
+        """
         terms = torch.bmm(r.view(-1, 4, 1), q.view(-1, 1, 4))
-
         x = terms[:, 3, 0] + terms[:, 0, 3] - terms[:, 1, 2] + terms[:, 2, 1]
         y = terms[:, 3, 1] + terms[:, 0, 2] + terms[:, 1, 3] - terms[:, 2, 0]
         z = terms[:, 3, 2] - terms[:, 0, 1] + terms[:, 1, 0] + terms[:, 2, 3]
         w = terms[:, 3, 3] - terms[:, 0, 0] - terms[:, 1, 1] - terms[:, 2, 2]
         qout = torch.stack((x, y, z, w), dim=1).view(original_shape)
+        """
+        terms = torch.bmm(r.view(-1, 4, 1), q.view(-1, 1, 4)).view(-1,16,1)
+        qout = torch.bmm(self.qmulMat.repeat(terms.shape[0],1,1),terms).squeeze(dim=2)
         return qout
     def qrot(self,q, v):
         qinv_ = self.qinv(q)

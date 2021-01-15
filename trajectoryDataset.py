@@ -9,7 +9,7 @@ class trajectoryDataset(Dataset):
     This class stores trajectory data for the robot. It can be used with torch's dataloaders to return
     samples for training
     """
-    def __init__(self, csv_file, root_dir,sampleLength=None, startMidTrajectory=False,device='cpu'):
+    def __init__(self, csv_file, root_dir,sampleLength=None, startMidTrajectory=False,staticDataIndices = [],device='cpu'):
         self.to(device)
         self.root_dir = root_dir
         csvData = pd.read_csv(root_dir+csv_file)
@@ -19,6 +19,7 @@ class trajectoryDataset(Dataset):
             sampleLength = np.min(self.trajLengths)
         self.setSampleLength(sampleLength,startMidTrajectory)
         self.preloaded=False
+        self.staticDataIndices = staticDataIndices
 
     def to(self,device):
         """ choose device (cpu or gpu) that the data should be loaded to"""
@@ -46,7 +47,13 @@ class trajectoryDataset(Dataset):
             loadedData = self.preloadedData[trajToUse]
         else:
             loadedData = torch.load(self.root_dir+self.trajFiles[trajToUse],map_location=self.device)
-        return tuple(loadedData[i][startIndex:endIndex,:] for i in range(len(loadedData)))
+        output = tuple()
+        for i in range(len(loadedData)):
+            if i in self.staticDataIndices:
+                output = output + (loadedData[i],)
+            else:
+                output = output + (loadedData[i][startIndex:endIndex,:],)
+        return output#tuple(loadedData[i][startIndex:endIndex,:] for i in range(len(loadedData)))
 
     def setSampleLength(self,length,startMidTrajectory=None):
         """ Set trajectory length of samples """
