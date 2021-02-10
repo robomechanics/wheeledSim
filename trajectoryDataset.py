@@ -52,7 +52,10 @@ class trajectoryDataset(Dataset):
             if i in self.staticDataIndices:
                 output = output + (loadedData[i],)
             else:
-                output = output + (loadedData[i][startIndex:endIndex,:],)
+                if len(loadedData[i].shape)>1:
+                    output = output + (loadedData[i][startIndex:endIndex,:],)
+                else:
+                    output = output + (loadedData[i][startIndex:endIndex],)
         return output#tuple(loadedData[i][startIndex:endIndex,:] for i in range(len(loadedData)))
 
     def setSampleLength(self,length,startMidTrajectory=None):

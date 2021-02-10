@@ -16,6 +16,7 @@ run simController.py for an example
 ### simController
 The simController class handles controlling the robot and generation of new terrains. It can also be used to get the robot's state and sensor data (LiDAR or heightmap)
 ### RandomRockyTerrain
-The RandomRockyTerrain class handles generation of random terrains. It generates terrains by first creating a Voronoi partition to create random blocks, smooths out edges, then adds random perlin noise
+The RandomRockyTerrain class handles generation of random terrains. It generates terrains by first creating a Voronoi partition to create random blocks, smooths out edges, then adds random perlin noise.
+Look at examples/terrainGeneration.py for example
 ### robot controllers
 The simController can handle different types of wheeled robots. Currently, only one is included which is the Clifford Robot.
