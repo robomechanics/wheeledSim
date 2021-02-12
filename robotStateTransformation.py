@@ -77,8 +77,13 @@ class robotStateTransformation(object):
             terrainMapParams = self.terrainMapParams
         if senseParams is None:
             senseParams = self.senseParams
-        if len(terrainMap.shape)-1 < len(self.currentState.shape):
-            terrainMap = terrainMap.unsqueeze(1).repeat(1,self.currentState.shape[1],1,1)
+        #if len(terrainMap.shape)-1 < len(self.currentState.shape):
+        #    terrainMap = terrainMap.unsqueeze(-3).repeat(1,self.currentState.shape[1],1,1)
+        while len(terrainMap.shape) <= len(self.currentState.shape):
+            print(terrainMap.shape)
+            terrainMap = terrainMap.unsqueeze(-3)
+            terrainMap = terrainMap.repeat_interleave(self.currentState.shape[len(terrainMap.shape)-3],dim=-3)
+            print(terrainMap.shape)
         # define map pixel locations relative to robot
         pixelXRelRobot=torch.linspace(-senseParams['senseDim'][0]/2,senseParams['senseDim'][0]/2,senseParams['senseResolution'][0],device=self.device)
         pixelYRelRobot=torch.linspace(-senseParams['senseDim'][1]/2,senseParams['senseDim'][1]/2,senseParams['senseResolution'][1],device=self.device)
