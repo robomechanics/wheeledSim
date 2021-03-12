@@ -54,7 +54,7 @@ class robotStateTransformation(object):
         return predictionInput.view(self.originalDimPrefix+predictionInput.shape[-1:])
     def getRelativeState(self,absoluteState):
         self.currentState = self.currentState.view(-1,self.currentState.shape[-1])
-        absoluteState = absoluteState.view(-1,absoluteState.shape[-1])
+        absoluteState = absoluteState.reshape(-1,absoluteState.shape[-1])
         Rbw = self.qinv(self.currentState[:,3:7])
         pbw = self.qrot(Rbw,-self.currentState[:,0:3])
         relativePos,relativeOrien = self.transformMul(pbw,Rbw,absoluteState[:,0:3],absoluteState[:,3:7])
@@ -70,7 +70,7 @@ class robotStateTransformation(object):
         posHeading = torch.cat((self.currentState[:,0:3],heading),dim=1)
         self.currentState = self.currentState.view(self.originalDimPrefix+self.currentState.shape[-1:])
         return posHeading.view(self.originalDimPrefix+posHeading.shape[-1:])
-    def getHeightMap(self,terrainMap=None,terrainMapParams=None,senseParams=None):
+    def getHeightMap(self,useChannel = False,terrainMap=None,terrainMapParams=None,senseParams=None):
         if terrainMap is None:
             terrainMap = self.terrainMap
         if terrainMapParams is None:
@@ -80,10 +80,8 @@ class robotStateTransformation(object):
         #if len(terrainMap.shape)-1 < len(self.currentState.shape):
         #    terrainMap = terrainMap.unsqueeze(-3).repeat(1,self.currentState.shape[1],1,1)
         while len(terrainMap.shape) <= len(self.currentState.shape):
-            print(terrainMap.shape)
             terrainMap = terrainMap.unsqueeze(-3)
             terrainMap = terrainMap.repeat_interleave(self.currentState.shape[len(terrainMap.shape)-3],dim=-3)
-            print(terrainMap.shape)
         # define map pixel locations relative to robot
         pixelXRelRobot=torch.linspace(-senseParams['senseDim'][0]/2,senseParams['senseDim'][0]/2,senseParams['senseResolution'][0],device=self.device)
         pixelYRelRobot=torch.linspace(-senseParams['senseDim'][1]/2,senseParams['senseDim'][1]/2,senseParams['senseResolution'][1],device=self.device)
@@ -108,7 +106,10 @@ class robotStateTransformation(object):
         heightMaps = torch.nn.functional.grid_sample(heightMaps,pixelLocWorld,align_corners=True).squeeze(dim=1)
         heightMaps = heightMaps-posHeading[:,2].unsqueeze(1).unsqueeze(1).repeat(1,heightMaps.shape[1],heightMaps.shape[2])
         heightMaps = heightMaps.transpose(1,2)
-        return heightMaps.view(self.originalDimPrefix+heightMaps.shape[-2:])
+        if useChannel:
+            return heightMaps.view(self.originalDimPrefix+(1,)+heightMaps.shape[-2:])
+        else:
+            return heightMaps.view(self.originalDimPrefix+heightMaps.shape[-2:])
     def transformMul(self,p1,q1,p2,q2):
         qout = self.qmul(q1,q2)
         pout = p1+self.qrot(q1,p2)
