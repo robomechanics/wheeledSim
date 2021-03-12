@@ -32,7 +32,7 @@ class RandomRockyTerrain:
         self.terrainBody = []
         self.color = [0.82,0.71,0.55,1]
     # generate new terrain. (Delete old terrain if exists)
-    def generate(self,terrainParamsIn={},copyGridZ = None):
+    def generate(self,terrainParamsIn={},copyGridZ = None,copyBlockHeight=None):
         baseTerrainParams = {"AverageAreaPerCell":1,
                             "cellPerlinScale":5,
                             "cellHeightScale":0.9,
@@ -43,14 +43,21 @@ class RandomRockyTerrain:
                             "blendRadius":0.5}
         terrainParams = baseTerrainParams.copy()
         terrainParams.update(terrainParamsIn)
+        # if parameters are a range, randomly sample
+        for param in terrainParams:
+            if type(terrainParams[param]) is list:
+                terrainParams[param] = np.rand()*(terrainParams[param][1]-terrainParams[param][0]) + terrainParams[param][0]
         # use gridZ that is inputted
         if not copyGridZ is None:
             self.gridZ=np.copy(copyGridZ)
         else:
         # generate random blocks
-            numCells = int(float(self.mapSize[0])*float(self.mapSize[1])/float(terrainParams["AverageAreaPerCell"]))
-            blockHeights = self.randomSteps(self.gridX.reshape(-1),self.gridY.reshape(-1),numCells,terrainParams["cellPerlinScale"],terrainParams["cellHeightScale"])
-            blockHeights = gaussian_filter(blockHeights.reshape(self.gridX.shape), sigma=terrainParams["smoothing"])
+            if copyBlockHeight is None:
+                numCells = int(float(self.mapSize[0])*float(self.mapSize[1])/float(terrainParams["AverageAreaPerCell"]))
+                blockHeights = self.randomSteps(self.gridX.reshape(-1),self.gridY.reshape(-1),numCells,terrainParams["cellPerlinScale"],terrainParams["cellHeightScale"])
+                blockHeights = gaussian_filter(blockHeights.reshape(self.gridX.shape), sigma=terrainParams["smoothing"])
+            else:
+                blockHeights=copyBlockHeight
             # add more small noise
             smallNoise = self.perlinNoise(self.gridX.reshape(-1),self.gridY.reshape(-1),terrainParams["perlinScale"],terrainParams["perlinHeightScale"])
             smallNoise = smallNoise.reshape(self.gridX.shape)
