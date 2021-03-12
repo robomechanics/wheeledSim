@@ -231,7 +231,7 @@ if __name__=="__main__":
                     "heightScale":0.1}
     terrainParams = {"AverageAreaPerCell":1.0,
                     "cellPerlinScale":5,
-                    "cellHeightScale":0.5, # parameters for generating terrain
+                    "cellHeightScale":0.6, # parameters for generating terrain
                     "smoothing":0.7,
                     "perlinScale":2.5,
                     "perlinHeightScale":0.1}
