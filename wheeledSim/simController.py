@@ -1,7 +1,7 @@
 import pybullet as p
-from RandomRockyTerrain import RandomRockyTerrain
 import numpy as np
-from ouNoise import ouNoise
+from wheeledSim.RandomRockyTerrain import RandomRockyTerrain
+from wheeledSim.ouNoise import ouNoise
 
 class simController:
     # this class controls the simulation. It controls the terrain and robot, and returns data

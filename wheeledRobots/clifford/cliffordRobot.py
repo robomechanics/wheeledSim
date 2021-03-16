@@ -1,9 +1,7 @@
 import pybullet as p
-import time
-import pybullet_data
-from RandomRockyTerrain import RandomRockyTerrain
 import numpy as np
 import os
+
 # This class adds a clifford (wheeled off road) robot to a given PyBullet simulation
 class Clifford:
     def __init__(self,sdfRootPath=None,physicsClientId=0, params={}):
@@ -202,36 +200,3 @@ class Clifford:
         velocityReadings = [jointState[1] for jointState in jointStates]
         measurements = positionReadings + velocityReadings
         return measurements
-
-
-if __name__=="__main__":
-    physicsClient = p.connect(p.GUI)#or p.DIRECT for non-graphical version
-    p.setAdditionalSearchPath(pybullet_data.getDataPath()) #optionally
-    p.setGravity(0,0,-10)
-    timeStep = 1./240.
-    p.setTimeStep(timeStep)
-    p.setPhysicsEngineParameter(numSolverIterations=500)
-    #planeId = p.loadURDF("plane.urdf")
-    mapWidth = 300
-    mapHeight = 300
-    terrain = RandomRockyTerrain(mapWidth,mapHeight,0.1,0.1)
-    terrain.generate(AverageAreaPerCell=10,cellHeightScale=0.5,perlinHeightScale=0.05,smoothing=1)
-    clifford = Clifford()
-    for i in range (100):
-        clifford.updateSpringForce()
-        p.stepSimulation()
-    #clifford.drive(10)
-    steerAng = 0.5
-    #clifford.steer(steerAng)
-    startTime = time.time()
-    for i in range (50000):
-        clifford.updateSpringForce()
-        p.stepSimulation()
-        #print((i*timeStep)/(time.time()-startTime))
-        if i%60==0:
-            #posOrientation = clifford.getPositionOrientation()
-            #print(posOrientation)
-            print(clifford.measureJoints())
-            #rHeightMap = (terrain.robotHeightMap(posOrientation[0],posOrientation[1],4,4,0.5))
-    print("done")
-    p.disconnect()
