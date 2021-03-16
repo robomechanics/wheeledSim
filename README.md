@@ -2,7 +2,10 @@
 ## Overview
 Maintainer: Sean J. Wang, sjw2@andrew.cmu.edu
 ## Installation
-Run '''pip install .'''
+To install, navigate to directory in terminal and run
+'''
+pip install .
+'''
 ### Required Dependencies
 - [Python 3]
 - [PyBullet](pybullet.org) Physics simulation engine
