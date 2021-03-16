@@ -3,9 +3,11 @@
 Maintainer: Sean J. Wang, sjw2@andrew.cmu.edu
 ## Installation
 To install, clone repository and use pip to install
+
     git clone https://github.com/robomechanics/wheeledSim.git
     cd wheeledSim
     pip install .
+    
 ### Required Dependencies
 - [Python 3]
 - [PyBullet](pybullet.org) Physics simulation engine
