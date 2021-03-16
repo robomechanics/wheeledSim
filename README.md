@@ -7,15 +7,16 @@ To install, clone repository and use pip to install
     git clone https://github.com/robomechanics/wheeledSim.git
     cd wheeledSim
     pip install .
-    
+
 ### Required Dependencies
-- [Python 3]
+This package is built using Python 3. The following packages are required and will be installed by pip.
 - [PyBullet](pybullet.org) Physics simulation engine
 - [NumPy](numpy.org)
 - [SciPy](scipy.org)
 - [noise](pypi.org/project/noise)
 
 ### Optional Dependencies
+The following packages are only necessary to run some examples.
 - [PyTorch](pytorch.org)
 - [matplotlib]
 
