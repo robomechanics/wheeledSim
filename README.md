@@ -1,4 +1,4 @@
-# wheeledRobotSimPybullet
+# wheeledSim
 ## Overview
 Maintainer: Sean J. Wang, sjw2@andrew.cmu.edu
 ## Installation
