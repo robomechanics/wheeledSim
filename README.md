@@ -10,10 +10,10 @@ To install, clone repository and use pip to install
 
 ### Required Dependencies
 This package is built using Python 3. The following packages are required and will be installed by pip.
-- [PyBullet](pybullet.org) Physics simulation engine
-- [NumPy](numpy.org)
-- [SciPy](scipy.org)
-- [noise](pypi.org/project/noise)
+- [PyBullet](https://pybullet.org) Physics simulation engine
+- [NumPy](https://numpy.org)
+- [SciPy](https://scipy.org)
+- [noise](https://pypi.org/project/noise)
 
 ### Optional Dependencies
 The following packages are only necessary to run some examples.
