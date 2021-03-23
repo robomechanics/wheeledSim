@@ -1,8 +1,8 @@
 import pybullet as p
 import time
 import torch
-from robots.clifford.cliffordRobot import Clifford
-from simController import simController as simController
+from wheeledRobots.clifford.cliffordRobot import Clifford
+from wheeledSim.simController import simController as simController
 import concurrent.futures
 import numpy as np
 import csv
