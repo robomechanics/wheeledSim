@@ -21,10 +21,10 @@ The following packages are only necessary to run some examples.
 - [matplotlib](https://matplotlib.org/)
 
 ## Examples
-# cliffordExample.py
+### cliffordExample.py
 Example of simulating the Clifford robot. Random drive actions are taken. As Clifford is driving, sensor data is measured and plotted.
 
-# dataGather_terrainMap.py
+### dataGather_terrainMap.py
 Example of running multiple simulations of the Clifford robot in parallel. Random drive actions are taken. Data (robot starting state, action, robot ending state)for each timestep, as well as the global terrain map for each trajectory is saved. All data is then loaded as a PyTorch dataset.
 
 ## Basic Functionality
