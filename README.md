@@ -37,5 +37,3 @@ Look at examples/terrainGeneration.py for example
 
 ### robot controllers
 The simController can handle different types of wheeled robots. Currently, only one is included which is the Clifford Robot.
-
-## Examples
