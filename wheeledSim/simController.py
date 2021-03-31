@@ -199,9 +199,9 @@ class simController:
             sensorData = np.expand_dims(sensorData,axis=0)
         return sensorData
     # generate random drive action
+    #def randomDriveAction(self):
+    #    return self.randDrive.multiGenNoise(50)
     def randomDriveAction(self):
-        return self.randDrive.multiGenNoise(50)
-    def randomDriveSinusoid(self):
         self.sinActionT = self.sinActionT+np.random.normal([0.1,0.5],[0.01,0.2])
         return np.sin(self.sinActionT)
 
