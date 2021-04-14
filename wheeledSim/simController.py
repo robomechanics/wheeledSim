@@ -2,6 +2,7 @@ import pybullet as p
 import numpy as np
 from wheeledSim.RandomRockyTerrain import RandomRockyTerrain
 from wheeledSim.ouNoise import ouNoise
+from wheeledSim.boundedExplorationNoise import boundedExplorationNoise
 
 class simController:
     # this class controls the simulation. It controls the terrain and robot, and returns data
@@ -14,7 +15,8 @@ class simController:
                             "contactBreakingThreshold":0.0001,
                             "contactSlop":0.0001,
                             "moveThreshold":0,
-                            "maxStopMoveLength":np.inf}
+                            "maxStopMoveLength":np.inf,
+                            "randomActionScale":[1,1]}
         self.simulationParams = baseSimulationParams.copy()
         self.simulationParams.update(simulationParamsIn)
         
@@ -42,7 +44,6 @@ class simController:
         self.robot = robot
         self.resetRobot()
         self.lastStateRecordFlag = False # Flag to tell if last state of robot has been recorded or not
-        self.randDrive = ouNoise()
 
         # Parameters below are for determining if robot is stuck and haven't moved in a while
         self.moveThreshold = self.simulationParams["moveThreshold"]*self.simulationParams["moveThreshold"] # store square distance for easier computation later
@@ -63,8 +64,10 @@ class simController:
         self.senseParams = baseSenseParams.copy()
         self.senseParams.update(senseParamsIn)
 
-        # random sinsusoidal drive tracking
-        self.sinActionT = np.zeros(2)
+        # init random driving
+        self.randDrive = boundedExplorationNoise([0,0],[0.1,0.1],[0.5,0.5],0.8)
+        #self.randDrive = ouNoise()
+        #self.randDrive = np.zeros(2)
     def newTerrain(self,copyGridZ=None):
         self.terrain.generate(self.terrainParams,copyGridZ = copyGridZ)
     def resetRobot(self,doFall=True,pos=[0,0],orien=[0,0,0,1]):
@@ -199,90 +202,8 @@ class simController:
             sensorData = np.expand_dims(sensorData,axis=0)
         return sensorData
     # generate random drive action
-    #def randomDriveAction(self):
-    #    return self.randDrive.multiGenNoise(50)
     def randomDriveAction(self):
-        self.sinActionT = self.sinActionT+np.random.normal([0.1,0.5],[0.01,0.2])
-        return np.sin(self.sinActionT)
-
-
-if __name__=="__main__":
-    # all parameters of robot/ simulation
-    simParams = {"timeStep":1./500.,
-                "stepsPerControlLoop":50,
-                "numSolverIterations":300,
-                "gravity":-10,
-                "contactBreakingThreshold":0.0001,
-                "contactSlop":0.0001,
-                "moveThreshold":0.1,
-                "maxStopMoveLength":25}
-    cliffordParams={"maxThrottle":20, # dynamical parameters of clifford robot
-                    "maxSteerAngle":0.5,
-                    "susOffset":-0.00,
-                    "susLowerLimit":-0.01,
-                    "susUpperLimit":0.00,
-                    "susDamping":10,
-                    "susSpring":500,
-                    "traction":1.25,
-                    "masScale":1.0}
-    terrainMapParams = {"mapWidth":300, # width of matrix
-                    "mapHeight":300, # height of matrix
-                    "widthScale":0.1, # each pixel corresponds to this distance
-                    "heightScale":0.1}
-    terrainParams = {"AverageAreaPerCell":1.0,
-                    "cellPerlinScale":5,
-                    "cellHeightScale":0.6, # parameters for generating terrain
-                    "smoothing":0.7,
-                    "perlinScale":2.5,
-                    "perlinHeightScale":0.1}
-    heightMapSenseParams = {} # use base params for heightmap
-    lidarDepthParams = {"senseDim":[2.*np.pi,np.pi/4.], # angular width and height of lidar sensing
-                    "lidarAngleOffset":[0,0], # offset of lidar sensing angle
-                    "lidarRange":120, # max distance of lidar sensing
-                    "senseResolution":[512,16], # resolution of sensing (width x height)
-                    "removeInvalidPointsInPC":False, # remove invalid points in point cloud
-                    "senseType":1,
-                    "sensorPose":[[0,0,0.3],[0,0,0,1]]} # pose of sensor relative to body
-    lidarPCParams = lidarDepthParams.copy()
-    lidarPCParams["senseType"] = 2
-    noSenseParams = {"senseType":-1}
-    senseParams = noSenseParams # use this kind of sensing
-    # start simulation
-    physicsClient = p.connect(p.GUI)#or p.DIRECT for non-graphical version
-    # initialize clifford robot
-    from robots.clifford.cliffordRobot import Clifford
-    robot = Clifford(params=cliffordParams,physicsClientId=physicsClient)
-    # initialize simulation controller
-    sim = simController(robot,simulationParamsIn=simParams,senseParamsIn=senseParams,terrainMapParamsIn=terrainMapParams,terrainParamsIn=terrainParams,physicsClientId=physicsClient)
-    # save simulation parameters for future reuse (sim params, robot params, terrain map params, terrain params, sensing params)
-    np.save('exampleAllSimParams.npy',[sim.simulationParams,robot.params,sim.terrain.terrainMapParams,sim.terrainParams,sim.senseParams])
-    plotSensorReadings = False # plot sensor reading during simulation?
-    if plotSensorReadings:
-        import matplotlib.pyplot as plt
-        fig = plt.figure()
-    # simulate trajectory of length 100
-    for i in range(10000):
-        # step simulation
-        data = sim.controlLoopStep(sim.randomDriveSinusoid())# sim.randomDriveAction())
-        print(data[0][1])
-        if data[2]: # simulation failed, restartsim
-            sim.newTerrain()
-            sim.resetRobot()
-        else:
-            if plotSensorReadings:
-                sensorData = data[0][1]
-                plt.clf()
-                if sim.senseParams["senseType"] == 2: #point cloud
-                    ax = fig.add_subplot(111, projection='3d')
-                    ax.scatter(sensorData[0,:],sensorData[1,:],sensorData[2,:],s=0.1,c='r',marker='o')
-                    ax.set_xlim([-5,5])
-                    ax.set_ylim([-5,5])
-                    ax.set_zlim([-5,5])
-                else: # 2d map
-                    ax = fig.add_subplot()
-                    ax.imshow(sensorData,aspect='auto')
-                #plt.show()
-                plt.draw()
-                plt.pause(0.001)
-    # end simulation
-    p.disconnect()
+        return self.randDrive.next()*np.array(self.simulationParams['randomActionScale'])
+        #self.randDrive.multiGenNoise(50)
+        #self.sinActionT = self.sinActionT+np.random.normal([0.1,0.5],[0.01,0.2])
+        #return np.sin(self.sinActionT)

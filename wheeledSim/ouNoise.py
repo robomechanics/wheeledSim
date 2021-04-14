@@ -39,7 +39,7 @@ if __name__ == '__main__':
     noise1 = []
     noise2 = []
     for i in range(100):
-        generatedNoise = noise.multiGenNoise(50)
+        generatedNoise = noise.genNoise()
         noise1.append(generatedNoise[0])
         noise2.append(generatedNoise[1])
     plt.figure(1)
