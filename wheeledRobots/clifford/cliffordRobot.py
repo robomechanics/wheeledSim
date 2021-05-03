@@ -21,7 +21,8 @@ class Clifford:
                         "susSpring":100,
                         "traction":1.5,
                         "massScale":1.0,
-                        "tireMassScale":1.0}
+                        "tireMassScale":1.0,
+                        "fixedSuspension":False}
         # change default params if defined
         for param in self.params:
             if param in params:
@@ -86,7 +87,8 @@ class Clifford:
         nJoints = p.getNumJoints(self.cliffordID,physicsClientId=self.physicsClientId)
         tireIndices = [self.linkNameToID[name] for name in ['frtire','fltire','brtire','bltire']]
         for i in range(nJoints):
-            if len(p.getJointStateMultiDof(bodyUniqueId=self.cliffordID,jointIndex=i,physicsClientId=self.physicsClientId)[0]) == 4:
+            if len(p.getJointStateMultiDof(bodyUniqueId=self.cliffordID,jointIndex=i,physicsClientId=self.physicsClientId)[0]) == 4 \
+            and not self.params["fixedSuspension"]:
                 p.setJointMotorControlMultiDof(bodyUniqueId=self.cliffordID,
                                                 jointIndex=i,
                                                 controlMode=p.POSITION_CONTROL,
@@ -94,28 +96,28 @@ class Clifford:
                                                 positionGain=0,
                                                 velocityGain=0,
                                                 force=[0,0,0],physicsClientId=self.physicsClientId)
-                dynamicsData = p.getDynamicsInfo(self.cliffordID,i,physicsClientId=self.physicsClientId)
-                massScale = self.params["massScale"]
-                if i in tireIndices:
-                    massScale = massScale*self.params['tireMassScale']
-                newMass = dynamicsData[0]*massScale
-                newInertia = [dynamicsData[2][j]*massScale for j in range(len(dynamicsData[2]))]
-                p.changeDynamics(self.cliffordID,i,mass = newMass, localInertiaDiagonal=newInertia,linearDamping=0.2,angularDamping=0.2,restitution=0,physicsClientId=self.physicsClientId)
+            dynamicsData = p.getDynamicsInfo(self.cliffordID,i,physicsClientId=self.physicsClientId)
+            massScale = self.params["massScale"]
+            if i in tireIndices:
+                massScale = massScale*self.params['tireMassScale']
+            newMass = dynamicsData[0]*massScale
+            newInertia = [dynamicsData[2][j]*massScale for j in range(len(dynamicsData[2]))]
+            p.changeDynamics(self.cliffordID,i,mass = newMass, localInertiaDiagonal=newInertia,linearDamping=0.2,angularDamping=0.2,restitution=0,physicsClientId=self.physicsClientId)
         springJointNames = ['brslower2upper','blslower2upper','frslower2upper','flslower2upper']
         springConstant = 0
         springDamping = 0
         maxSpringForce = 0
         for name in springJointNames:
-            JointInfo = p.getJointInfo(self.cliffordID,self.jointNameToID[name],physicsClientId=self.physicsClientId)
-            p.setJointMotorControlArray(bodyUniqueId=self.cliffordID,
-                                    jointIndices=[self.jointNameToID[name]],
-                                    controlMode=p.POSITION_CONTROL,
-                                    targetPositions=[0],
-                                    positionGains=[springConstant],
-                                    velocityGains=[springDamping],
-                                    forces=[maxSpringForce],physicsClientId=self.physicsClientId)
-            p.changeDynamics(self.cliffordID,self.jointNameToID[name],jointLowerLimit=self.params["susLowerLimit"],jointUpperLimit=self.params["susUpperLimit"],physicsClientId=self.physicsClientId)
-            #print(p.getDynamicsInfo(self.cliffordID,self.jointNameToID[name],physicsClientId=self.physicsClientId))
+            #JointInfo = p.getJointInfo(self.cliffordID,self.jointNameToID[name],physicsClientId=self.physicsClientId)
+            #p.setJointMotorControlArray(bodyUniqueId=self.cliffordID,
+            #                        jointIndices=[self.jointNameToID[name]],
+            #                        controlMode=p.POSITION_CONTROL,
+            #                        targetPositions=[0],
+            #                        positionGains=[springConstant],
+            #                        velocityGains=[springDamping],
+            #                        forces=[maxSpringForce],physicsClientId=self.physicsClientId)
+            if not self.params["fixedSuspension"]:
+                p.changeDynamics(self.cliffordID,self.jointNameToID[name],jointLowerLimit=self.params["susLowerLimit"],jointUpperLimit=self.params["susUpperLimit"],physicsClientId=self.physicsClientId)
     def addClosedChainConstraint(self,linkName,linkFrame2Joint):
         linkState = p.getLinkState(self.cliffordID,self.linkNameToID[linkName],physicsClientId=self.physicsClientId)
         bodyState = p.getBasePositionAndOrientation(self.cliffordID,physicsClientId=self.physicsClientId)
@@ -143,6 +145,8 @@ class Clifford:
             p.changeDynamics(self.cliffordID,self.linkNameToID[tire],lateralFriction=self.params["traction"],physicsClientId=self.physicsClientId)
 
     def updateSpringForce(self):
+        if self.params["fixedSuspension"]:
+            return
         springStates = p.getJointStates(self.cliffordID,self.springJointIDs,physicsClientId=self.physicsClientId)
         susForces = []
         for springState in springStates:
