@@ -5,11 +5,10 @@ from noise import pnoise1,pnoise2
 from scipy.interpolate import interp2d
 from scipy.interpolate import griddata
 
-class RandomRockyTerrain:
+class terrain(object):
     """
-    This class handles the generation of random terrain. It can also return robot centered terrain maps
+    parent class for random terrain generation
     """
-    # initialize terrain object
     def __init__(self,terrainMapParamsIn={},physicsClientId=0):
         self.physicsClientId = physicsClientId
         # base parameters for map used to generate terrain
@@ -31,6 +30,58 @@ class RandomRockyTerrain:
         self.terrainShape = [] # used to replace terrain shape if it already exists
         self.terrainBody = []
         self.color = [0.82,0.71,0.55,1]
+    def updateTerrain(self):
+        # delete previous terrain if exists
+        if isinstance(self.terrainShape,int):
+            p.removeBody(self.terrainBody,physicsClientId=self.physicsClientId)
+            self.terrainShape = p.createCollisionShape(shapeType = p.GEOM_HEIGHTFIELD,meshScale = self.meshScale, heightfieldData=self.gridZ.reshape(-1),
+                                                        numHeightfieldRows=self.mapWidth, numHeightfieldColumns=self.mapHeight,
+                                                        replaceHeightfieldIndex = self.terrainShape,physicsClientId=self.physicsClientId)
+        else:
+            self.terrainShape = p.createCollisionShape(shapeType = p.GEOM_HEIGHTFIELD,meshScale = self.meshScale, heightfieldData=self.gridZ.reshape(-1), 
+                                                        numHeightfieldRows=self.mapWidth, numHeightfieldColumns=self.mapHeight,
+                                                        physicsClientId=self.physicsClientId)
+            self.terrainOffset = (np.max(self.gridZ)+np.min(self.gridZ))/2.
+        self.terrainBody  = p.createMultiBody(0, self.terrainShape,physicsClientId=self.physicsClientId)
+        # position terrain correctly
+        p.resetBasePositionAndOrientation(self.terrainBody,[-self.meshScale[0]/2.,-self.meshScale[1]/2.,self.terrainOffset], [0,0,0,1],physicsClientId=self.physicsClientId)
+        # change to brown terrain
+        p.changeVisualShape(self.terrainBody, -1, textureUniqueId=-1,rgbaColor=self.color,physicsClientId=self.physicsClientId)
+        # change contact parameters of terrain
+        p.changeDynamics(self.terrainBody,-1,collisionMargin=0.01,restitution=0,contactStiffness=30000,contactDamping=1000,physicsClientId=self.physicsClientId)
+    # return terrain map relative to a Pose
+    def sensedHeightMap(self,sensorPose,mapDim,mapResolution):
+        maxRadius = np.sqrt((mapDim[0]/2.)**2+(mapDim[1]/2.)**2)
+        vecX = self.gridX.reshape(-1)-sensorPose[0][0]
+        vecY = self.gridY.reshape(-1)-sensorPose[0][1]
+        indices = np.all(np.stack((np.abs(vecX)<=(maxRadius+self.meshScale[0]),np.abs(vecY)<=(maxRadius+self.meshScale[1]))),axis=0)
+        vecX = vecX[indices]
+        vecY = vecY[indices]
+        vecZ = self.gridZ.reshape(-1)[indices]
+        forwardDir = np.array(p.multiplyTransforms([0,0,0],sensorPose[1],[1,0,0],[0,0,0,1])[0][0:2])
+        headingAngle = np.arctan2(forwardDir[1],forwardDir[0])
+        relativeX = vecX*np.cos(headingAngle)+vecY*np.sin(headingAngle)
+        relativeY = -vecX*np.sin(headingAngle)+vecY*np.cos(headingAngle)
+        rMapX = np.linspace(-mapDim[0]/2.,mapDim[0]/2.,mapResolution[0])
+        rMapY = np.linspace(-mapDim[1]/2.,mapDim[1]/2.,mapResolution[1])
+        points = np.stack((relativeX,relativeY)).transpose()
+        rMapX,rMapY = np.meshgrid(rMapX,rMapY)
+        return griddata(points, vecZ, (rMapX,rMapY))-sensorPose[0][2]
+    # find maximum terrain height within a circle around a position
+    def maxLocalHeight(self,position,radius):
+        vecX = self.gridX.reshape(-1)-position[0]
+        vecY = self.gridY.reshape(-1)-position[1]
+        indices = vecX*vecX+vecY*vecY<radius
+        vecZ = self.gridZ.reshape(-1)[indices]
+        return np.expand_dims(np.max(vecZ), axis=0)
+
+class RandomRockyTerrain(terrain):
+    """
+    This class handles the generation of random terrain. It can also return robot centered terrain maps
+    """
+    # initialize terrain object
+    def __init__(self,terrainMapParamsIn={},physicsClientId=0):
+        super().__init__(terrainMapParamsIn,physicsClientId)
     # generate new terrain. (Delete old terrain if exists)
     def generate(self,terrainParamsIn={},copyGridZ = None,copyBlockHeight=None):
         baseTerrainParams = {"AverageAreaPerCell":1,
@@ -72,24 +123,7 @@ class RandomRockyTerrain:
                 blendIndices = distFromFlat < terrainParams['blendRadius']
                 self.gridZ[blendIndices] = flatHeight + (self.gridZ[blendIndices]-flatHeight)*distFromFlat[blendIndices]/terrainParams['flatRadius']
             self.gridZ = self.gridZ-np.min(self.gridZ)
-        # delete previous terrain if exists
-        if isinstance(self.terrainShape,int):
-            p.removeBody(self.terrainBody,physicsClientId=self.physicsClientId)
-            self.terrainShape = p.createCollisionShape(shapeType = p.GEOM_HEIGHTFIELD,meshScale = self.meshScale, heightfieldData=self.gridZ.reshape(-1),
-                                                        numHeightfieldRows=self.mapWidth, numHeightfieldColumns=self.mapHeight,
-                                                        replaceHeightfieldIndex = self.terrainShape,physicsClientId=self.physicsClientId)
-        else:
-            self.terrainShape = p.createCollisionShape(shapeType = p.GEOM_HEIGHTFIELD,meshScale = self.meshScale, heightfieldData=self.gridZ.reshape(-1), 
-                                                        numHeightfieldRows=self.mapWidth, numHeightfieldColumns=self.mapHeight,
-                                                        physicsClientId=self.physicsClientId)
-            self.terrainOffset = (np.max(self.gridZ)+np.min(self.gridZ))/2.
-        self.terrainBody  = p.createMultiBody(0, self.terrainShape,physicsClientId=self.physicsClientId)
-        # position terrain correctly
-        p.resetBasePositionAndOrientation(self.terrainBody,[-self.meshScale[0]/2.,-self.meshScale[1]/2.,self.terrainOffset], [0,0,0,1],physicsClientId=self.physicsClientId)
-        # change to brown terrain
-        p.changeVisualShape(self.terrainBody, -1, textureUniqueId=-1,rgbaColor=self.color,physicsClientId=self.physicsClientId)
-        # change contact parameters of terrain
-        p.changeDynamics(self.terrainBody,-1,collisionMargin=0.01,restitution=0,contactStiffness=30000,contactDamping=1000,physicsClientId=self.physicsClientId)
+        self.updateTerrain()
     def randomSteps(self,xPoints,yPoints,numCells,cellPerlinScale,cellHeightScale):
         centersX = np.random.uniform(size=numCells,low=np.min(xPoints),high=np.max(xPoints))
         centersY = np.random.uniform(size=numCells,low=np.min(yPoints),high=np.max(yPoints))
@@ -111,40 +145,3 @@ class RandomRockyTerrain:
     def perlinNoise(self,xPoints,yPoints,perlinScale,heightScale):
         randomSeed = np.random.rand(2)*1000
         return np.array([pnoise2(randomSeed[0]+xPoints[i]*perlinScale,randomSeed[1]+yPoints[i]*perlinScale) for i in range(len(xPoints))])*heightScale
-    # return terrain map relative to a Pose
-    def sensedHeightMap(self,sensorPose,mapDim,mapResolution):
-        maxRadius = np.sqrt((mapDim[0]/2.)**2+(mapDim[1]/2.)**2)
-        vecX = self.gridX.reshape(-1)-sensorPose[0][0]
-        vecY = self.gridY.reshape(-1)-sensorPose[0][1]
-        indices = np.all(np.stack((np.abs(vecX)<=(maxRadius+self.meshScale[0]),np.abs(vecY)<=(maxRadius+self.meshScale[1]))),axis=0)
-        vecX = vecX[indices]
-        vecY = vecY[indices]
-        vecZ = self.gridZ.reshape(-1)[indices]
-        forwardDir = np.array(p.multiplyTransforms([0,0,0],sensorPose[1],[1,0,0],[0,0,0,1])[0][0:2])
-        headingAngle = np.arctan2(forwardDir[1],forwardDir[0])
-        relativeX = vecX*np.cos(headingAngle)+vecY*np.sin(headingAngle)
-        relativeY = -vecX*np.sin(headingAngle)+vecY*np.cos(headingAngle)
-        rMapX = np.linspace(-mapDim[0]/2.,mapDim[0]/2.,mapResolution[0])
-        rMapY = np.linspace(-mapDim[1]/2.,mapDim[1]/2.,mapResolution[1])
-        points = np.stack((relativeX,relativeY)).transpose()
-        rMapX,rMapY = np.meshgrid(rMapX,rMapY)
-        return griddata(points, vecZ, (rMapX,rMapY))-sensorPose[0][2]
-    # find maximum terrain height within a circle around a position
-    def maxLocalHeight(self,position,radius):
-        vecX = self.gridX.reshape(-1)-position[0]
-        vecY = self.gridY.reshape(-1)-position[1]
-        indices = vecX*vecX+vecY*vecY<radius
-        vecZ = self.gridZ.reshape(-1)[indices]
-        return np.expand_dims(np.max(vecZ), axis=0)
-
-if __name__=="__main__":
-    physicsClient = p.connect(p.GUI)#or p.DIRECT for non-graphical version
-    p.setGravity(0,0,-10)
-    mapWidth = 300
-    mapHeight = 300
-    import time
-    terrain = RandomRockyTerrain(physicsClientId=physicsClient)
-    for i in range(100):
-        terrain.generate()
-        time.sleep(1)
-    p.disconnect()

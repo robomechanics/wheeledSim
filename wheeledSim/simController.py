@@ -1,6 +1,6 @@
 import pybullet as p
 import numpy as np
-from wheeledSim.RandomRockyTerrain import RandomRockyTerrain
+from wheeledSim.RandomRockyTerrain import *
 from wheeledSim.ouNoise import ouNoise
 from wheeledSim.boundedExplorationNoise import boundedExplorationNoise
 
