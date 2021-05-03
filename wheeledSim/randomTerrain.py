@@ -30,6 +30,9 @@ class terrain(object):
         self.terrainShape = [] # used to replace terrain shape if it already exists
         self.terrainBody = []
         self.color = [0.82,0.71,0.55,1]
+    def copyGridZ(self,gridZIn):
+        self.gridZ=np.copy(copyGridZ)
+        self.updateTerrain()
     def updateTerrain(self):
         # delete previous terrain if exists
         if isinstance(self.terrainShape,int):
@@ -75,15 +78,24 @@ class terrain(object):
         vecZ = self.gridZ.reshape(-1)[indices]
         return np.expand_dims(np.max(vecZ), axis=0)
 
-class RandomRockyTerrain(terrain):
+class randomSloped(terrain):
     """
-    This class handles the generation of random terrain. It can also return robot centered terrain maps
+    This class generates flat terrain with random slope
+    """
+    def generate(self,terrainParamsIn={}):
+        slope = np.random.rand()
+        self.gridZ = self.gridX*slope
+        self.updateTerrain()
+
+class randomRockyTerrain(terrain):
+    """
+    This class handles the generation of random rocky terrain
     """
     # initialize terrain object
     def __init__(self,terrainMapParamsIn={},physicsClientId=0):
         super().__init__(terrainMapParamsIn,physicsClientId)
     # generate new terrain. (Delete old terrain if exists)
-    def generate(self,terrainParamsIn={},copyGridZ = None,copyBlockHeight=None):
+    def generate(self,terrainParamsIn={},copyBlockHeight=None):
         baseTerrainParams = {"AverageAreaPerCell":1,
                             "cellPerlinScale":5,
                             "cellHeightScale":0.9,
@@ -98,31 +110,27 @@ class RandomRockyTerrain(terrain):
         for param in terrainParams:
             if type(terrainParams[param]) is list:
                 terrainParams[param] = np.rand()*(terrainParams[param][1]-terrainParams[param][0]) + terrainParams[param][0]
-        # use gridZ that is inputted
-        if not copyGridZ is None:
-            self.gridZ=np.copy(copyGridZ)
-        else:
         # generate random blocks
-            if copyBlockHeight is None:
-                numCells = int(float(self.mapSize[0])*float(self.mapSize[1])/float(terrainParams["AverageAreaPerCell"]))
-                blockHeights = self.randomSteps(self.gridX.reshape(-1),self.gridY.reshape(-1),numCells,terrainParams["cellPerlinScale"],terrainParams["cellHeightScale"])
-                blockHeights = gaussian_filter(blockHeights.reshape(self.gridX.shape), sigma=terrainParams["smoothing"])
-            else:
-                blockHeights=copyBlockHeight
-            # add more small noise
-            smallNoise = self.perlinNoise(self.gridX.reshape(-1),self.gridY.reshape(-1),terrainParams["perlinScale"],terrainParams["perlinHeightScale"])
-            smallNoise = smallNoise.reshape(self.gridX.shape)
-            self.gridZ = (blockHeights+smallNoise)
-            # make center flat for initial robot start position
-            distFromOrigin = np.sqrt(self.gridX*self.gridX + self.gridY*self.gridY)
-            flatIndices = distFromOrigin<terrainParams['flatRadius']
-            if flatIndices.any():
-                flatHeight = np.mean(self.gridZ[flatIndices])
-                self.gridZ[flatIndices] = flatHeight
-                distFromFlat = distFromOrigin - terrainParams['flatRadius']
-                blendIndices = distFromFlat < terrainParams['blendRadius']
-                self.gridZ[blendIndices] = flatHeight + (self.gridZ[blendIndices]-flatHeight)*distFromFlat[blendIndices]/terrainParams['flatRadius']
-            self.gridZ = self.gridZ-np.min(self.gridZ)
+        if copyBlockHeight is None:
+            numCells = int(float(self.mapSize[0])*float(self.mapSize[1])/float(terrainParams["AverageAreaPerCell"]))
+            blockHeights = self.randomSteps(self.gridX.reshape(-1),self.gridY.reshape(-1),numCells,terrainParams["cellPerlinScale"],terrainParams["cellHeightScale"])
+            blockHeights = gaussian_filter(blockHeights.reshape(self.gridX.shape), sigma=terrainParams["smoothing"])
+        else:
+            blockHeights=copyBlockHeight
+        # add more small noise
+        smallNoise = self.perlinNoise(self.gridX.reshape(-1),self.gridY.reshape(-1),terrainParams["perlinScale"],terrainParams["perlinHeightScale"])
+        smallNoise = smallNoise.reshape(self.gridX.shape)
+        self.gridZ = (blockHeights+smallNoise)
+        # make center flat for initial robot start position
+        distFromOrigin = np.sqrt(self.gridX*self.gridX + self.gridY*self.gridY)
+        flatIndices = distFromOrigin<terrainParams['flatRadius']
+        if flatIndices.any():
+            flatHeight = np.mean(self.gridZ[flatIndices])
+            self.gridZ[flatIndices] = flatHeight
+            distFromFlat = distFromOrigin - terrainParams['flatRadius']
+            blendIndices = distFromFlat < terrainParams['blendRadius']
+            self.gridZ[blendIndices] = flatHeight + (self.gridZ[blendIndices]-flatHeight)*distFromFlat[blendIndices]/terrainParams['flatRadius']
+        self.gridZ = self.gridZ-np.min(self.gridZ)
         self.updateTerrain()
     def randomSteps(self,xPoints,yPoints,numCells,cellPerlinScale,cellHeightScale):
         centersX = np.random.uniform(size=numCells,low=np.min(xPoints),high=np.max(xPoints))

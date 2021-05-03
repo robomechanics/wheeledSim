@@ -1,6 +1,6 @@
 import pybullet as p
 import numpy as np
-from wheeledSim.RandomRockyTerrain import *
+from wheeledSim.randomTerrain import *
 from wheeledSim.ouNoise import ouNoise
 from wheeledSim.boundedExplorationNoise import boundedExplorationNoise
 
@@ -21,7 +21,7 @@ class simController:
                             "randomActionScale":[1,1]}
         self.simulationParams.update(simulationParamsIn)
         # set up terrain params
-        self.terrainParams = {"terrainType": "RandomRockyTerrain",
+        self.terrainParams = {"terrainType": "randomSloped",
                             "existingTerrain": None}
         self.terrainParams.update(terrainParamsIn)
         # set up robot sensing parameters
@@ -50,10 +50,10 @@ class simController:
         if self.terrainParams["existingTerrain"]!=None:
             self.terrain = self.terrainParams["existingTerrain"]
         else:
-            if self.terrainParams["terrainType"] == "RandomRockyTerrain":
-                self.terrain = RandomRockyTerrain(terrainMapParamsIn,physicsClientId=self.physicsClientId)
-            elif self.terrainParams["terrainType"] == "RandomSloped":
-                self.terrain = RandomSloped(terrainParamsIn,physicsClientId=self.physicsClientId)
+            if self.terrainParams["terrainType"] == "randomRockyTerrain":
+                self.terrain = randomRockyTerrain(terrainMapParamsIn,physicsClientId=self.physicsClientId)
+            elif self.terrainParams["terrainType"] == "randomSloped":
+                self.terrain = randomSloped(terrainParamsIn,physicsClientId=self.physicsClientId)
             self.newTerrain()
 
         # set up determination of wheter robot is stuck
@@ -74,8 +74,8 @@ class simController:
         #self.randDrive = np.zeros(2)
 
     # generate new terrain
-    def newTerrain(self,copyGridZ=None):
-        self.terrain.generate(self.terrainParams,copyGridZ = copyGridZ)
+    def newTerrain(self):
+        self.terrain.generate(self.terrainParams)
 
     # reset the robot
     def resetRobot(self,doFall=True,pos=[0,0],orien=[0,0,0,1]):
