@@ -7,8 +7,9 @@ from wheeledSim.boundedExplorationNoise import boundedExplorationNoise
 class simController:
     # this class controls the simulation. It controls the terrain and robot, and returns data
     def __init__(self,robot,physicsClientId=0,simulationParamsIn={},senseParamsIn={},
-                terrainMapParamsIn={},terrainParamsIn={},existingTerrain=None):
-        baseSimulationParams = {"timeStep":1./500.,
+                terrainMapParamsIn={},terrainParamsIn={}):
+        # set up simulation params
+        self.simulationParams = {"timeStep":1./500.,
                             "stepsPerControlLoop":50,
                             "numSolverIterations":300,
                             "gravity":-10,
@@ -16,10 +17,24 @@ class simController:
                             "contactSlop":0.0001,
                             "moveThreshold":0,
                             "maxStopMoveLength":np.inf,
+                            "terminateIfFlipped":False,
                             "randomActionScale":[1,1]}
-        self.simulationParams = baseSimulationParams.copy()
         self.simulationParams.update(simulationParamsIn)
-        
+        # set up terrain params
+        self.terrainParams = {"terrainType": "RandomRockyTerrain",
+                            "existingTerrain": None}
+        self.terrainParams.update(terrainParamsIn)
+        # set up robot sensing parameters
+        self.senseParams = {"senseDim":[5,5], # width (meter or angle) and height (meter or angle) of terrain map or point cloud
+                            "lidarAngleOffset":[0,0],
+                            "lidarRange":10,
+                            "senseResolution":[100,100], # array giving resolution of map output (num pixels wide x num pixels high)
+                            "removeInvalidPointsInPC":False, # remove invalid points in point cloud
+                            "senseType":0, # 0 for terrainMap, 1 for lidar depth image, 2 for lidar point cloud
+                            "sensorPose":[[0,0,0],[0,0,0,1]], # pose of sensor relative to body
+                            "recordJointStates":False} # whether to record joint data or not
+        self.senseParams.update(senseParamsIn)
+
         # set up simulation
         self.physicsClientId=physicsClientId
         self.timeStep = self.simulationParams["timeStep"]
@@ -32,57 +47,51 @@ class simController:
         p.setTimeStep(self.timeStep,physicsClientId=self.physicsClientId)
 
         # set up terrain
-        self.terrainParams = terrainParamsIn
-        if existingTerrain!=None:
-            self.terrain = existingTerrain
+        if self.terrainParams["existingTerrain"]!=None:
+            self.terrain = self.terrainParams["existingTerrain"]
         else:
-            self.terrain = RandomRockyTerrain(terrainMapParamsIn,physicsClientId=self.physicsClientId)
+            if self.terrainParams["terrainType"] == "RandomRockyTerrain":
+                self.terrain = RandomRockyTerrain(terrainMapParamsIn,physicsClientId=self.physicsClientId)
+            elif self.terrainParams["terrainType"] == "RandomSloped":
+                self.terrain = RandomSloped(terrainParamsIn,physicsClientId=self.physicsClientId)
             self.newTerrain()
 
-        # set up robot
-        self.camFollowBot = False
-        self.robot = robot
-        self.resetRobot()
-        self.lastStateRecordFlag = False # Flag to tell if last state of robot has been recorded or not
-
-        # Parameters below are for determining if robot is stuck and haven't moved in a while
+        # set up determination of wheter robot is stuck
         self.moveThreshold = self.simulationParams["moveThreshold"]*self.simulationParams["moveThreshold"] # store square distance for easier computation later
-        self.maxStopMoveLength = self.simulationParams["maxStopMoveLength"]
         self.lastX = 0
         self.lastY = 0
         self.stopMoveCount =0
 
-        # set up robot sensing
-        baseSenseParams = {"senseDim":[5,5], # width (meter or angle) and height (meter or angle) of terrain map or point cloud
-                            "lidarAngleOffset":[0,0],
-                            "lidarRange":10,
-                            "senseResolution":[100,100], # array giving resolution of map output (num pixels wide x num pixels high)
-                            "removeInvalidPointsInPC":False, # remove invalid points in point cloud
-                            "senseType":0, # 0 for terrainMap, 1 for lidar depth image, 2 for lidar point cloud
-                            "sensorPose":[[0,0,0],[0,0,0,1]], # pose of sensor relative to body
-                            "recordJointStates":False} # whether to record joint data or not
-        self.senseParams = baseSenseParams.copy()
-        self.senseParams.update(senseParamsIn)
+        # set up robot
+        self.camFollowBot = False
+        self.robot = robot
+        self.lastStateRecordFlag = False # Flag to tell if last state of robot has been recorded or not
+        self.resetRobot()
 
-        # init random driving
+        # set up random driving
         self.randDrive = boundedExplorationNoise([0,0],[0.1,0.1],[0.5,0.5],0.8)
         #self.randDrive = ouNoise()
         #self.randDrive = np.zeros(2)
+
+    # generate new terrain
     def newTerrain(self,copyGridZ=None):
         self.terrain.generate(self.terrainParams,copyGridZ = copyGridZ)
+
+    # reset the robot
     def resetRobot(self,doFall=True,pos=[0,0],orien=[0,0,0,1]):
+        self.controlLoopStep([0,0])
         if len(pos)>2:
             safeFallHeight = pos[2]
         else:
             safeFallHeight = self.terrain.maxLocalHeight(pos,1)+0.3
         self.robot.reset([[pos[0],pos[1],safeFallHeight],orien])
         if doFall:
-            self.robotFall()
+            while True:
+                self.stepSim()
+                if np.linalg.norm(self.robot.getBaseVelocity_body()) < 0.001:
+                    break
         self.stopMoveCount = 0
-    def robotFall(self,fallTime=0.5):
-        fallSteps = int(np.ceil(fallTime/self.timeStep))
-        for i in range(fallSteps):
-            self.stepSim()
+
     def stepSim(self):
         self.robot.updateSpringForce()
         p.stepSimulation(physicsClientId=self.physicsClientId)
@@ -137,23 +146,31 @@ class simController:
         self.lastStateRecordFlag = True
         newStateData = [self.lastAbsoluteState]
         return stateActionData,newStateData,self.simTerminateCheck(newPose)
+
     # check if simulation should be terminated
     def simTerminateCheck(self,robotPose):
         termSim = False
-        # check if robot is about to flip
-        upDir = p.multiplyTransforms([0,0,0],robotPose[1],[0,0,1],[0,0,0,1])[0]
-        if upDir[2] < 0:
+        # flipped robot termination criteria
+        if self.simulationParams["terminateIfFlipped"]:
+            upDir = p.multiplyTransforms([0,0,0],robotPose[1],[0,0,1],[0,0,0,1])[0]
+            if upDir[2] < 0:
+                termSim = True
+        # stuck robot terminate criteria
+        if self.stopMoveCount > self.simulationParams["maxStopMoveLength"]:
             termSim = True
-        # check if robot has been stuck for too long
-        if self.stopMoveCount > self.maxStopMoveLength:
-            termSim = True
-        # check if robot is out of bound
-        maxZ = np.max(np.abs(self.terrain.gridZ)) + 1.
+        # boundary criteria
+        minZ = np.min(self.terrain.gridZ) - 1.
+        maxZ = np.max(self.terrain.gridZ) + 1.
+        minX = np.min(self.terrain.gridX) + 1.
         maxX = np.max(self.terrain.gridX) - 1.
+        minY = np.min(self.terrain.gridY) + 1.
         maxY = np.max(self.terrain.gridY) - 1.
-        if np.abs(robotPose[0][0])>maxX or np.abs(robotPose[0][1])>maxY or np.abs(robotPose[0][2])>maxZ:
+        if robotPose[0][0] > maxX or robotPose[0][0] < minX or \
+        robotPose[0][1] > maxY or robotPose[0][1] < minY or \
+        robotPose[0][2] > maxZ or robotPose[0][2] < minZ:
             termSim = True
         return termSim
+
     # generate sensing data
     def sensing(self,robotPose,senseType=None,expandDim=False):
         if senseType is None:
