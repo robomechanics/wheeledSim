@@ -1,13 +1,12 @@
 import pybullet as p
 import numpy as np
 from wheeledSim.randomTerrain import *
-from wheeledSim.ouNoise import ouNoise
-from wheeledSim.boundedExplorationNoise import boundedExplorationNoise
+from wheeledSim.randomExplorationPolicy import *
 
 class simController:
     # this class controls the simulation. It controls the terrain and robot, and returns data
     def __init__(self,robot,physicsClientId=0,simulationParamsIn={},senseParamsIn={},
-                terrainMapParamsIn={},terrainParamsIn={}):
+                terrainMapParamsIn={},terrainParamsIn={},explorationParamsIn={}):
         # set up simulation params
         self.simulationParams = {"timeStep":1./500.,
                             "stepsPerControlLoop":50,
@@ -20,10 +19,7 @@ class simController:
                             "terminateIfFlipped":False,
                             "randomActionScale":[1,1]}
         self.simulationParams.update(simulationParamsIn)
-        # set up terrain params
-        self.terrainParams = {"terrainType": "randomRockyTerrain",
-                            "existingTerrain": None}
-        self.terrainParams.update(terrainParamsIn)
+        
         # set up robot sensing parameters
         self.senseParams = {"senseDim":[5,5], # width (meter or angle) and height (meter or angle) of terrain map or point cloud
                             "lidarAngleOffset":[0,0],
@@ -47,15 +43,18 @@ class simController:
         p.setTimeStep(self.timeStep,physicsClientId=self.physicsClientId)
 
         # set up terrain
-        if self.terrainParams["existingTerrain"]!=None:
-            self.terrain = self.terrainParams["existingTerrain"]
+        self.terrainParamsIn = {"terrainType": "randomRockyTerrain",
+                            "existingTerrain": None}
+        self.terrainParamsIn.update(terrainParamsIn)
+        if self.terrainParamsIn["existingTerrain"]!=None:
+            self.terrain = self.terrainParamsIn["existingTerrain"]
         else:
-            if self.terrainParams["terrainType"] == "randomRockyTerrain":
+            if self.terrainParamsIn["terrainType"] == "randomRockyTerrain":
                 self.terrain = randomRockyTerrain(terrainMapParamsIn,physicsClientId=self.physicsClientId)
-            elif self.terrainParams["terrainType"] == "randomSloped":
-                self.terrain = randomSloped(terrainParamsIn,physicsClientId=self.physicsClientId)
+            elif self.terrainParamsIn["terrainType"] == "randomSloped":
+                self.terrain = randomSloped(terrainMapParamsIn,physicsClientId=self.physicsClientId)
             else:
-                self.terrain = self.terrainParams["terrainType"](terrainParamsIn,physicsClientId=self.physicsClientId)
+                self.terrain = self.terrainParamsIn["terrainType"](terrainMapParamsIn,physicsClientId=self.physicsClientId)
             self.newTerrain()
 
         # set up determination of wheter robot is stuck
@@ -64,20 +63,25 @@ class simController:
         self.lastY = 0
         self.stopMoveCount =0
 
+        # set up random driving
+        explorationParams = {"explorationType":"boundedExplorationNoise"}
+        explorationParams.update(explorationParamsIn)
+        if explorationParams["explorationType"] == "boundedExplorationNoise":
+            self.randDrive = boundedExplorationNoise(explorationParams)
+        elif explorationParams["explorationType"] == "fixedRandomAction":
+            self.randDrive = fixedRandomAction(explorationParams)
+        #self.randDrive = ouNoise()
+        #self.randDrive = np.zeros(2)
+
         # set up robot
         self.camFollowBot = False
         self.robot = robot
         self.lastStateRecordFlag = False # Flag to tell if last state of robot has been recorded or not
         self.resetRobot()
 
-        # set up random driving
-        self.randDrive = boundedExplorationNoise([0,0],[0.1,0.1],[0.5,0.5],0.8)
-        #self.randDrive = ouNoise()
-        #self.randDrive = np.zeros(2)
-
     # generate new terrain
     def newTerrain(self,**kwargs):
-        self.terrain.generate(self.terrainParams,**kwargs)
+        self.terrain.generate(self.terrainParamsIn,**kwargs)
 
     # reset the robot
     def resetRobot(self,doFall=True,pos=[0,0],orien=[0,0,0,1]):
@@ -93,6 +97,7 @@ class simController:
                 if np.linalg.norm(self.robot.getBaseVelocity_body()) < 0.001:
                     break
         self.stopMoveCount = 0
+        self.randDrive.reset()
 
     def stepSim(self):
         self.robot.updateSpringForce()
@@ -222,7 +227,8 @@ class simController:
         return sensorData
     # generate random drive action
     def randomDriveAction(self):
-        return self.randDrive.next()*np.array(self.simulationParams['randomActionScale'])
+        return self.randDrive.next()
+        #return self.randDrive.next()*np.array(self.simulationParams['randomActionScale'])
         #self.randDrive.multiGenNoise(50)
         #self.sinActionT = self.sinActionT+np.random.normal([0.1,0.5],[0.01,0.2])
         #return np.sin(self.sinActionT)
