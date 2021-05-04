@@ -83,10 +83,15 @@ class randomSloped(terrain):
     This class generates flat terrain with random slope
     """
     def generate(self,terrainParamsIn={}):
-        slope = np.random.rand()
+        terrainParams = {"gmm_centers":[0],
+                        "gmm_vars":[1],
+                        "gmm_weights":[1]}
+        terrainParams.update(terrainParamsIn)
+        index = np.random.choice(len(terrainParams['gmm_weights']),p=terrainParams['gmm_weights'])
+        slope = np.random.normal(terrainParams['gmm_centers'][index],terrainParams['gmm_vars'][index])
+        print(slope)
         self.gridZ = self.gridX*slope
         self.updateTerrain()
-
 class randomRockyTerrain(terrain):
     """
     This class handles the generation of random rocky terrain
@@ -95,8 +100,8 @@ class randomRockyTerrain(terrain):
     def __init__(self,terrainMapParamsIn={},physicsClientId=0):
         super().__init__(terrainMapParamsIn,physicsClientId)
     # generate new terrain. (Delete old terrain if exists)
-    def generate(self,terrainParamsIn={},copyBlockHeight=None):
-        baseTerrainParams = {"AverageAreaPerCell":1,
+    def generate(self,terrainParamsIn={},copyBlockHeight=None,goal=None):
+        terrainParams = {"AverageAreaPerCell":1,
                             "cellPerlinScale":5,
                             "cellHeightScale":0.9,
                             "smoothing":0.7,
@@ -104,12 +109,7 @@ class randomRockyTerrain(terrain):
                             "perlinHeightScale":0.1,
                             "flatRadius":1,
                             "blendRadius":0.5}
-        terrainParams = baseTerrainParams.copy()
         terrainParams.update(terrainParamsIn)
-        # if parameters are a range, randomly sample
-        for param in terrainParams:
-            if type(terrainParams[param]) is list:
-                terrainParams[param] = np.rand()*(terrainParams[param][1]-terrainParams[param][0]) + terrainParams[param][0]
         # generate random blocks
         if copyBlockHeight is None:
             numCells = int(float(self.mapSize[0])*float(self.mapSize[1])/float(terrainParams["AverageAreaPerCell"]))
@@ -121,15 +121,42 @@ class randomRockyTerrain(terrain):
         smallNoise = self.perlinNoise(self.gridX.reshape(-1),self.gridY.reshape(-1),terrainParams["perlinScale"],terrainParams["perlinHeightScale"])
         smallNoise = smallNoise.reshape(self.gridX.shape)
         self.gridZ = (blockHeights+smallNoise)
+        # params for flat areas (start and goal)
+        if hasattr(terrainParams['flatRadius'],'__len__'):
+            startFlatRadius = terrainParams['flatRadius'][0]
+            goalFlatRadius = startFlatRadius
+            if len(terrainParams['flatRadius']) > 1:
+                goalFlatRadius = terrainParams['flatRadius'][1]
+        else:
+            startFlatRadius = terrainParams['flatRadius']
+            goalFlatRadius = startFlatRadius
+        if hasattr(terrainParams['blendRadius'],'__len__'):
+            startBlendRadius = terrainParams['blendRadius'][0]
+            goalBlendRadius = startBlendRadius
+            if len(terrainParams['blendRadius']) > 1:
+                goalBlendRadius = terrainParams['blendRadius'][1]
+        else:
+            startBlendRadius = terrainParams['blendRadius']
+            goalBlendRadius = startBlendRadius
         # make center flat for initial robot start position
         distFromOrigin = np.sqrt(self.gridX*self.gridX + self.gridY*self.gridY)
-        flatIndices = distFromOrigin<terrainParams['flatRadius']
+        flatIndices = distFromOrigin<startFlatRadius
         if flatIndices.any():
             flatHeight = np.mean(self.gridZ[flatIndices])
             self.gridZ[flatIndices] = flatHeight
-            distFromFlat = distFromOrigin - terrainParams['flatRadius']
-            blendIndices = distFromFlat < terrainParams['blendRadius']
-            self.gridZ[blendIndices] = flatHeight + (self.gridZ[blendIndices]-flatHeight)*distFromFlat[blendIndices]/terrainParams['flatRadius']
+            distFromFlat = distFromOrigin - startFlatRadius
+            blendIndices = distFromFlat < startBlendRadius
+            self.gridZ[blendIndices] = flatHeight + (self.gridZ[blendIndices]-flatHeight)*distFromFlat[blendIndices]/startBlendRadius
+        # make goal flat
+        if not goal is None:
+            distFromGoal = np.sqrt((self.gridX-goal[0])**2+(self.gridY-goal[1])**2)
+            flatIndices = distFromGoal<goalFlatRadius
+            if flatIndices.any():
+                flatHeight = np.mean(self.gridZ[flatIndices])
+                self.gridZ[flatIndices] = flatHeight
+                distFromFlat = distFromGoal - goalFlatRadius
+                blendIndices = distFromFlat < goalBlendRadius
+                self.gridZ[blendIndices] = flatHeight + (self.gridZ[blendIndices]-flatHeight)*distFromFlat[blendIndices]/goalBlendRadius
         self.gridZ = self.gridZ-np.min(self.gridZ)
         self.updateTerrain()
     def randomSteps(self,xPoints,yPoints,numCells,cellPerlinScale,cellHeightScale):

@@ -21,7 +21,7 @@ class simController:
                             "randomActionScale":[1,1]}
         self.simulationParams.update(simulationParamsIn)
         # set up terrain params
-        self.terrainParams = {"terrainType": "randomSloped",
+        self.terrainParams = {"terrainType": "randomRockyTerrain",
                             "existingTerrain": None}
         self.terrainParams.update(terrainParamsIn)
         # set up robot sensing parameters
@@ -54,6 +54,8 @@ class simController:
                 self.terrain = randomRockyTerrain(terrainMapParamsIn,physicsClientId=self.physicsClientId)
             elif self.terrainParams["terrainType"] == "randomSloped":
                 self.terrain = randomSloped(terrainParamsIn,physicsClientId=self.physicsClientId)
+            else:
+                self.terrain = self.terrainParams["terrainType"](terrainParamsIn,physicsClientId=self.physicsClientId)
             self.newTerrain()
 
         # set up determination of wheter robot is stuck
@@ -74,8 +76,8 @@ class simController:
         #self.randDrive = np.zeros(2)
 
     # generate new terrain
-    def newTerrain(self):
-        self.terrain.generate(self.terrainParams)
+    def newTerrain(self,**kwargs):
+        self.terrain.generate(self.terrainParams,**kwargs)
 
     # reset the robot
     def resetRobot(self,doFall=True,pos=[0,0],orien=[0,0,0,1]):
