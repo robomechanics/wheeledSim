@@ -12,11 +12,10 @@ class terrain(object):
     def __init__(self,terrainMapParamsIn={},physicsClientId=0):
         self.physicsClientId = physicsClientId
         # base parameters for map used to generate terrain
-        baseMapParams = {"mapWidth":300, # width of matrix
+        self.terrainMapParams = {"mapWidth":300, # width of matrix
                         "mapHeight":300, # height of matrix
                         "widthScale":0.1, # each pixel corresponds to this distance
                         "heightScale":0.1}
-        self.terrainMapParams = baseMapParams.copy()
         self.terrainMapParams.update(terrainMapParamsIn)
         # store parameters
         self.mapWidth = self.terrainMapParams["mapWidth"] 
@@ -82,16 +81,18 @@ class randomSloped(terrain):
     """
     This class generates flat terrain with random slope
     """
+    def __init__(self,terrainMapParamsIn={},physicsClientId=0):
+        super().__init__(terrainMapParamsIn,physicsClientId)
+        self.terrainParams = {"gmm_centers":[0],
+                            "gmm_vars":[1],
+                            "gmm_weights":[1]}
     def generate(self,terrainParamsIn={}):
-        terrainParams = {"gmm_centers":[0],
-                        "gmm_vars":[1],
-                        "gmm_weights":[1]}
-        terrainParams.update(terrainParamsIn)
-        index = np.random.choice(len(terrainParams['gmm_weights']),p=terrainParams['gmm_weights'])
-        slope = np.random.normal(terrainParams['gmm_centers'][index],terrainParams['gmm_vars'][index])
-        print(slope)
+        self.terrainParams.update(terrainParamsIn)
+        index = np.random.choice(len(self.terrainParams['gmm_weights']),p=self.terrainParams['gmm_weights'])
+        slope = np.random.normal(self.terrainParams['gmm_centers'][index],self.terrainParams['gmm_vars'][index])
         self.gridZ = self.gridX*slope
         self.updateTerrain()
+
 class randomRockyTerrain(terrain):
     """
     This class handles the generation of random rocky terrain
@@ -99,9 +100,7 @@ class randomRockyTerrain(terrain):
     # initialize terrain object
     def __init__(self,terrainMapParamsIn={},physicsClientId=0):
         super().__init__(terrainMapParamsIn,physicsClientId)
-    # generate new terrain. (Delete old terrain if exists)
-    def generate(self,terrainParamsIn={},copyBlockHeight=None,goal=None):
-        terrainParams = {"AverageAreaPerCell":1,
+        self.terrainParams = {"AverageAreaPerCell":1,
                             "cellPerlinScale":5,
                             "cellHeightScale":0.9,
                             "smoothing":0.7,
@@ -109,34 +108,36 @@ class randomRockyTerrain(terrain):
                             "perlinHeightScale":0.1,
                             "flatRadius":1,
                             "blendRadius":0.5}
-        terrainParams.update(terrainParamsIn)
+    # generate new terrain. (Delete old terrain if exists)
+    def generate(self,terrainParamsIn={},copyBlockHeight=None,goal=None):
+        self.terrainParams.update(terrainParamsIn)
         # generate random blocks
         if copyBlockHeight is None:
-            numCells = int(float(self.mapSize[0])*float(self.mapSize[1])/float(terrainParams["AverageAreaPerCell"]))
-            blockHeights = self.randomSteps(self.gridX.reshape(-1),self.gridY.reshape(-1),numCells,terrainParams["cellPerlinScale"],terrainParams["cellHeightScale"])
-            blockHeights = gaussian_filter(blockHeights.reshape(self.gridX.shape), sigma=terrainParams["smoothing"])
+            numCells = int(float(self.mapSize[0])*float(self.mapSize[1])/float(self.terrainParams["AverageAreaPerCell"]))
+            blockHeights = self.randomSteps(self.gridX.reshape(-1),self.gridY.reshape(-1),numCells,self.terrainParams["cellPerlinScale"],self.terrainParams["cellHeightScale"])
+            blockHeights = gaussian_filter(blockHeights.reshape(self.gridX.shape), sigma=self.terrainParams["smoothing"])
         else:
             blockHeights=copyBlockHeight
         # add more small noise
-        smallNoise = self.perlinNoise(self.gridX.reshape(-1),self.gridY.reshape(-1),terrainParams["perlinScale"],terrainParams["perlinHeightScale"])
+        smallNoise = self.perlinNoise(self.gridX.reshape(-1),self.gridY.reshape(-1),self.terrainParams["perlinScale"],self.terrainParams["perlinHeightScale"])
         smallNoise = smallNoise.reshape(self.gridX.shape)
         self.gridZ = (blockHeights+smallNoise)
         # params for flat areas (start and goal)
-        if hasattr(terrainParams['flatRadius'],'__len__'):
-            startFlatRadius = terrainParams['flatRadius'][0]
+        if hasattr(self.terrainParams['flatRadius'],'__len__'):
+            startFlatRadius = self.terrainParams['flatRadius'][0]
             goalFlatRadius = startFlatRadius
-            if len(terrainParams['flatRadius']) > 1:
-                goalFlatRadius = terrainParams['flatRadius'][1]
+            if len(self.terrainParams['flatRadius']) > 1:
+                goalFlatRadius = self.terrainParams['flatRadius'][1]
         else:
-            startFlatRadius = terrainParams['flatRadius']
+            startFlatRadius = self.terrainParams['flatRadius']
             goalFlatRadius = startFlatRadius
-        if hasattr(terrainParams['blendRadius'],'__len__'):
-            startBlendRadius = terrainParams['blendRadius'][0]
+        if hasattr(self.terrainParams['blendRadius'],'__len__'):
+            startBlendRadius = self.terrainParams['blendRadius'][0]
             goalBlendRadius = startBlendRadius
-            if len(terrainParams['blendRadius']) > 1:
-                goalBlendRadius = terrainParams['blendRadius'][1]
+            if len(self.terrainParams['blendRadius']) > 1:
+                goalBlendRadius = self.terrainParams['blendRadius'][1]
         else:
-            startBlendRadius = terrainParams['blendRadius']
+            startBlendRadius = self.terrainParams['blendRadius']
             goalBlendRadius = startBlendRadius
         # make center flat for initial robot start position
         distFromOrigin = np.sqrt(self.gridX*self.gridX + self.gridY*self.gridY)
