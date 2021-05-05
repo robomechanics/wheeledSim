@@ -99,7 +99,7 @@ class simController:
                 if np.linalg.norm(self.robot.getBaseVelocity_body()) < 0.01:
                     break
                 if count > 1000:
-                     raise ValueError("robot won't settle on ground during reset")
+                    raise ValueError("robot won't settle on ground during reset")
         self.stopMoveCount = 0
         self.randDrive.reset()
 
