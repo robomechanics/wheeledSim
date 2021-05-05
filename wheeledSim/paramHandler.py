@@ -14,12 +14,12 @@ class paramHandler:
         # load parameters from file if provided
         if not allParamsFile is None:
             allParamsFile = np.load(allParamsFile,allow_pickle=True)
-            self.robotParams.update(allParams[0])
-            self.simParams.update(allParams[1])
-            self.terrainMapParams.update(allParams[2])
-            self.terrainParams.update(allParams[3])
-            self.senseParams.update(allParams[4])
-            self.explorationParams.update(allParams[5])
+            self.robotParams.update(allParamsFile[0])
+            self.simParams.update(allParamsFile[1])
+            self.terrainMapParams.update(allParamsFile[2])
+            self.terrainParams.update(allParamsFile[3])
+            self.senseParams.update(allParamsFile[4])
+            self.explorationParams.update(allParamsFile[5])
         # update any parameters based on input
         self.robotParams.update(robotParams)
         self.simParams.update(simParams)
@@ -39,6 +39,8 @@ class paramHandler:
     def saveParams(self, allParamsFile = 'allSimParams.npy'):
         np.save(allParamsFile,[self.robotParams,self.simParams,self.terrainMapParams,self.terrainParams,self.senseParams,self.explorationParams])
     def simulate(self,trajLength=100):
+        self.sim.newTerrain()
+        self.sim.resetRobot()
         for i in range(trajLength):
             stateAction,newState,terminateFlag = self.sim.controlLoopStep(self.sim.randomDriveAction())
             if terminateFlag:

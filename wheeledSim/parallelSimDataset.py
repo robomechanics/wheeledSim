@@ -3,6 +3,7 @@ import time
 import torch
 from wheeledRobots.clifford.cliffordRobot import Clifford
 from wheeledSim.simController import simController as simController
+from wheeledSim.paramHandler import paramHandler
 import concurrent.futures
 import numpy as np
 import csv
@@ -11,19 +12,17 @@ from os import path
 class singleProcess:
     def __init__(self,index):
         self.index = index
-    def setup(self,numTrajectoriesPerSim,trajectoryLength,root_dir,simulationParamsIn={},cliffordParamsIn={},terrainMapParamsIn={},terrainParamsIn={},senseParamsIn={}):
+    def setup(self,numTrajectoriesPerSim,trajectoryLength,dataDir,**kwargs):
         print("setup sim " +str(self.index))
         # save parameters
         self.trajectoryLength = trajectoryLength
         self.numTrajectoriesPerSim = numTrajectoriesPerSim
-        self.root_dir = root_dir
+        self.dataDir = dataDir
         # start sim
         physicsClientId = p.connect(p.DIRECT)
-        # initialize clifford robot
-        robot = Clifford(params=cliffordParamsIn,physicsClientId=physicsClientId)
-        # initialize simulation controller
-        self.sim = simController(robot,simulationParamsIn=simulationParamsIn,senseParamsIn=senseParamsIn,terrainMapParamsIn=terrainMapParamsIn,terrainParamsIn=terrainParamsIn,physicsClientId=physicsClientId)
-        stateAction,newState,terminateFlag = self.sim.controlLoopStep([0,0])
+        #initialize simulation
+        handler = paramHandler(physicsClientId=physicsClientId,**kwargs)
+        self.sim = handler.sim
         self.fileCounter = 0
         self.filenames = []
         self.trajectoryLengths = []
@@ -41,12 +40,12 @@ class singleProcess:
             self.trajectoryData[i+len(stateAction)] = torch.cat((self.trajectoryData[i+len(stateAction)],torch.from_numpy(np.array(newState[i])).unsqueeze(0).float()),dim=0)
     def saveTrajectory(self):
         filename = 'sim'+str(self.index)+'_'+str(self.fileCounter)+'.pt'
-        while path.exists(self.root_dir+filename):
+        while path.exists(self.dataDir+filename):
             self.fileCounter+=1
             filename = 'sim'+str(self.index)+'_'+str(self.fileCounter)+'.pt'
         self.filenames.append(filename)
         self.trajectoryLengths.append(self.trajectoryData[0].shape[0])
-        torch.save(self.trajectoryData,self.root_dir+filename)
+        torch.save(self.trajectoryData,self.dataDir+filename)
     def gatherSimData(self):
         sTime = time.time()
         while len(self.filenames) < self.numTrajectoriesPerSim:
@@ -74,23 +73,20 @@ class singleProcess:
     def outputIndex(self):
         return self.index
 
-def gatherData(numParallelSims,numTrajectoriesPerSim,trajectoryLength,rootDir,startNewFile):
-    # load all simulation parameters
-    [simParams,cliffordParams,terrainMapParams,terrainParams,senseParams] = np.load(rootDir+'allSimParams.npy',allow_pickle=True)
+def gatherData(numParallelSims,numTrajectoriesPerSim,trajectoryLength,dataDir,startNewFile=True,**kwargs): #**kwargs are for sim parameters
     # start all parallel simulations
     processes = [singleProcess(i) for i in range(numParallelSims)]
     for process in processes:
-        process.setup(numTrajectoriesPerSim,trajectoryLength,root_dir=rootDir,
-            simulationParamsIn=simParams,cliffordParamsIn=cliffordParams,terrainMapParamsIn=terrainMapParams,terrainParamsIn=terrainParams,senseParamsIn=senseParams)
+        process.setup(numTrajectoriesPerSim,trajectoryLength,dataDir,**kwargs)
     print("finished initialization")
     executor = concurrent.futures.ProcessPoolExecutor()
     results = [executor.submit(process.gatherSimData) for process in processes]
     concurrent.futures.wait(results,return_when=concurrent.futures.ALL_COMPLETED)
     # write metadata csv file
     if startNewFile:
-        csvFile = open(rootDir+'meta.csv', 'w', newline='')
+        csvFile = open(dataDir+'meta.csv', 'w', newline='')
     else:
-        csvFile = open(rootDir+'meta.csv', 'a', newline='')
+        csvFile = open(dataDir+'meta.csv', 'a', newline='')
     csvWriter = csv.writer(csvFile,delimiter=',')
     if startNewFile:
         csvWriter.writerow(['filenames','trajectoryLengths'])
