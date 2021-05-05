@@ -26,7 +26,7 @@ class simController:
                             "lidarRange":10,
                             "senseResolution":[100,100], # array giving resolution of map output (num pixels wide x num pixels high)
                             "removeInvalidPointsInPC":False, # remove invalid points in point cloud
-                            "senseType":0, # 0 for terrainMap, 1 for lidar depth image, 2 for lidar point cloud
+                            "senseType":-1, # 0 for terrainMap, 1 for lidar depth image, 2 for lidar point cloud, -1 for nothing
                             "sensorPose":[[0,0,0],[0,0,0,1]], # pose of sensor relative to body
                             "recordJointStates":False} # whether to record joint data or not
         self.senseParams.update(senseParamsIn)
@@ -92,10 +92,14 @@ class simController:
             safeFallHeight = self.terrain.maxLocalHeight(pos,1)+0.3
         self.robot.reset([[pos[0],pos[1],safeFallHeight],orien])
         if doFall:
+            count = 0
             while True:
                 self.stepSim()
-                if np.linalg.norm(self.robot.getBaseVelocity_body()) < 0.001:
+                count+=1
+                if np.linalg.norm(self.robot.getBaseVelocity_body()) < 0.01:
                     break
+                if count > 1000:
+                     raise ValueError("robot won't settle on ground during reset")
         self.stopMoveCount = 0
         self.randDrive.reset()
 
