@@ -92,14 +92,10 @@ class simController:
             safeFallHeight = self.terrain.maxLocalHeight(pos,1)+0.3
         self.robot.reset([[pos[0],pos[1],safeFallHeight],orien])
         if doFall:
-            count = 0
-            while True:
+            fallTime=0.5
+            fallSteps = int(np.ceil(fallTime/self.timeStep))
+            for i in range(fallSteps):
                 self.stepSim()
-                count+=1
-                if np.linalg.norm(self.robot.getBaseVelocity_body()) < 0.01:
-                    break
-                if count > 1000:
-                    raise ValueError("robot won't settle on ground during reset")
         self.stopMoveCount = 0
         self.randDrive.reset()
 
