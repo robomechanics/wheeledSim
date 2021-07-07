@@ -97,3 +97,5 @@ def gatherData(numParallelSims,numTrajectoriesPerSim,trajectoryLength,dataDir,st
         for i in range(len(fileNames)):
             csvWriter.writerow([fileNames[i],trajLengths[i]])
     csvFile.flush()
+    for process in processes:
+        p.disconnect(process.sim.physicsClientId)
