@@ -30,7 +30,7 @@ class terrain(object):
         self.terrainBody = []
         self.color = [0.82,0.71,0.55,1]
     def copyGridZ(self,gridZIn):
-        self.gridZ=np.copy(copyGridZ)
+        self.gridZ=np.copy(gridZIn)
         self.updateTerrain()
     def updateTerrain(self):
         # delete previous terrain if exists
