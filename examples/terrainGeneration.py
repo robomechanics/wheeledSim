@@ -8,15 +8,15 @@ from RandomRockyTerrain import RandomRockyTerrain
 if __name__ == '__main__':
     # start pybullet simulation
     physicsClientId = p.connect(p.GUI)#or p.DIRECT for non-graphical version
-    p.setGravity(0,0,-10)
+    # if any params are missing, default params will be used
+    # alternatively, can pass params={} for all default
     # define world terrain map parameters
     mapParams = {"mapWidth":300, # width of terrain map
                 "mapHeight":300, # height of terrain map
                 "widthScale":0.1, # Width of each pixel in map (meters)
                 "heightScale":0.1 # Width of each pixel in map (meters)
                 }
-    # if any params are missing, default params will be used
-    # alternatively, can pass mapParams={} for all default
+    
     # create terrain object
     terrain = RandomRockyTerrain(terrainMapParamsIn=mapParams,physicsClientId=physicsClientId)
     # generate terrain
