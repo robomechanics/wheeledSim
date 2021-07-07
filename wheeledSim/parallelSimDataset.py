@@ -40,12 +40,12 @@ class singleProcess:
             self.trajectoryData[i+len(stateAction)] = torch.cat((self.trajectoryData[i+len(stateAction)],torch.from_numpy(np.array(newState[i])).unsqueeze(0).float()),dim=0)
     def saveTrajectory(self):
         filename = 'sim'+str(self.index)+'_'+str(self.fileCounter)+'.pt'
-        while path.exists(self.dataDir+filename):
+        while path.exists(path.join(self.dataDir,filename)):#self.dataDir+filename):
             self.fileCounter+=1
             filename = 'sim'+str(self.index)+'_'+str(self.fileCounter)+'.pt'
         self.filenames.append(filename)
         self.trajectoryLengths.append(self.trajectoryData[0].shape[0])
-        torch.save(self.trajectoryData,self.dataDir+filename)
+        torch.save(self.trajectoryData,path.join(self.dataDir,filename))#self.dataDir+filename)
     def gatherSimData(self):
         sTime = time.time()
         while len(self.filenames) < self.numTrajectoriesPerSim:
@@ -83,10 +83,11 @@ def gatherData(numParallelSims,numTrajectoriesPerSim,trajectoryLength,dataDir,st
     results = [executor.submit(process.gatherSimData) for process in processes]
     concurrent.futures.wait(results,return_when=concurrent.futures.ALL_COMPLETED)
     # write metadata csv file
+    csvFile = path.join(dataDir,'meta.csv')# dataDir + 'meta.csv'
     if startNewFile:
-        csvFile = open(dataDir+'meta.csv', 'w', newline='')
+        csvFile = open(csvFile, 'w', newline='')
     else:
-        csvFile = open(dataDir+'meta.csv', 'a', newline='')
+        csvFile = open(csvFile, 'a', newline='')
     csvWriter = csv.writer(csvFile,delimiter=',')
     if startNewFile:
         csvWriter.writerow(['filenames','trajectoryLengths'])
